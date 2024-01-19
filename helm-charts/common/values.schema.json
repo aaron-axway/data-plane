@@ -1,0 +1,661 @@
+{
+  "$schema": "https://json-schema.org/draft/2019-09/schema",
+  "$id": "http://example.com/example.json",
+  "title": "Root Schema",
+  "type": "object",
+  "default": {},
+  "required": [
+    "global",
+    "persistence",
+    "azfiles",
+    "efs",
+    "nfs",
+    "certificate",
+    "nameOverride",
+    "hz_min_members",
+    "s3_payload",
+    "event",
+    "component",
+    "sftp_server_port",
+    "enable_audits",
+    "async_audits",
+    "enable_transaction_logs",
+    "admin_email",
+    "dxchange_email_host",
+    "dxchange_email_authentication",
+    "dxchange_email_port",
+    "dxchange_email_usetls",
+    "dxchange_email_username",
+    "acceptGeneralConditions",
+    "cluster_name",
+    "cluster_type",
+    "clusterRefId",
+    "domain",
+    "tenant",
+    "mode",
+    "cert_name",
+    "truststore",
+    "serverCertPassword",
+    "sftpServerCertPassword",
+    "serverTruststorePassword",
+    "dockerconfigjson",
+    "fromMailId",
+    "fromMailPassword",
+    "mcAdminUser",
+    "mcAdminPassword",
+    "jwtSecret",
+    "clusterId",
+    "secrets"
+  ],
+  "properties": {
+    "global": {
+      "title": "The global Schema",
+      "type": "object",
+      "default": {},
+      "required": [
+        "image",
+        "appEnv",
+        "external_domain",
+        "claimName",
+        "volumeStorageName",
+        "clusterKey"
+      ],
+      "properties": {
+        "image": {
+          "title": "The image Schema",
+          "type": "object",
+          "default": {},
+          "required": [
+            "repository",
+            "pullPolicy"
+          ],
+          "properties": {
+            "repository": {
+              "title": "The repository Schema",
+              "type": "string",
+              "default": "",
+              "minLength": 1
+            },
+            "pullPolicy": {
+              "title": "The pullPolicy Schema",
+              "type": "string",
+              "default": "",
+              "pattern": "^(Always|Never|IfNotPresent)$"
+            }
+          }
+        },
+        "appEnv": {
+          "title": "The appEnv Schema",
+          "type": "string",
+          "default": "",
+          "minLength": 1
+        },
+        "external_domain": {
+          "title": "The external_domain Schema",
+          "type": "string",
+          "default": "",
+          "minLength": 1
+        },
+        "claimName": {
+          "title": "The claimName Schema",
+          "type": "string",
+          "default": "",
+          "minLength": 1
+        },
+        "volumeStorageName": {
+          "title": "The volumeStorageName Schema",
+          "type": "string",
+          "default": "",
+          "minLength": 1
+        },
+        "clusterKey": {
+          "type": "string",
+          "default": "",
+          "title": "The clusterKey Schema",
+          "examples": [
+            ""
+          ]
+        }
+      }
+    },
+    "persistence": {
+      "title": "The persistence Schema",
+      "type": "object",
+      "default": {},
+      "required": [
+        "claimRequestCapacity",
+        "claimAccessMode",
+        "volumeName",
+        "volumeCapacity",
+        "volumeReclaimPolicy",
+        "volumeAccessMode"
+      ],
+      "properties": {
+        "claimRequestCapacity": {
+          "title": "The claimRequestCapacity Schema",
+          "type": "string",
+          "default": "",
+          "minLength": 2
+        },
+        "claimAccessMode": {
+          "title": "The claimAccessMode Schema",
+          "type": "string",
+          "default": "",
+          "pattern": "^(ReadWriteOnce|ReadWriteMany|ReadOnlyMany|ReadWriteOncePod)$"
+        },
+        "volumeName": {
+          "title": "The volumeName Schema",
+          "type": "string",
+          "default": "",
+          "minLength": 1
+        },
+        "volumeCapacity": {
+          "title": "The volumeCapacity Schema",
+          "type": "string",
+          "default": "",
+          "minLength": 2
+        },
+        "volumeReclaimPolicy": {
+          "title": "The volumeReclaimPolicy Schema",
+          "type": "string",
+          "default": "",
+          "pattern": "^(Retain|Recycle|Delete)$"
+        },
+        "volumeAccessMode": {
+          "title": "The volumeAccessMode Schema",
+          "type": "string",
+          "default": "",
+          "pattern": "^(ReadWriteOnce|ReadWriteMany|ReadOnlyMany|ReadWriteOncePod)$"
+        }
+      }
+    },
+    "azfiles": {
+      "title": "The azfiles Schema",
+      "type": "object",
+      "default": {},
+      "required": [
+        "enabled",
+        "resourceGroup",
+        "storageAccountName",
+        "fileshareName",
+        "azureStorageAccountName",
+        "azureStorageAccountKey"
+      ],
+      "properties": {
+        "enabled": {
+          "title": "The enabled Schema",
+          "type": "boolean",
+          "default": false
+        },
+        "resourceGroup": {
+          "title": "The resourceGroup Schema",
+          "type": "string",
+          "default": ""
+        },
+        "storageAccountName": {
+          "title": "The storageAccountName Schema",
+          "type": "string",
+          "default": ""
+        },
+        "fileshareName": {
+          "title": "The fileshareName Schema",
+          "type": "string",
+          "default": ""
+        },
+        "azureStorageAccountName": {
+          "title": "The azureStorageAccountName Schema",
+          "type": "string",
+          "default": ""
+        },
+        "azureStorageAccountKey": {
+          "title": "The azureStorageAccountKey Schema",
+          "type": "string",
+          "default": ""
+        }
+      }
+    },
+    "efs": {
+      "title": "The efs Schema",
+      "type": "object",
+      "default": {},
+      "required": [
+        "enabled",
+        "volumeHandle"
+      ],
+      "properties": {
+        "enabled": {
+          "title": "The enabled Schema",
+          "type": "boolean",
+          "default": false
+        },
+        "volumeHandle": {
+          "title": "The volumeHandle Schema",
+          "type": "string",
+          "default": ""
+        }
+      }
+    },
+    "nfs": {
+      "title": "The nfs Schema",
+      "type": "object",
+      "default": {},
+      "required": [
+        "enabled",
+        "staticPvc",
+        "server",
+        "path",
+        "mode",
+        "mountOptions"
+      ],
+      "properties": {
+        "enabled": {
+          "title": "The enabled Schema",
+          "type": "boolean",
+          "default": false
+        },
+        "staticPvc": {
+          "title": "The staticPvc Schema",
+          "type": "boolean",
+          "default": false
+        },
+        "server": {
+          "title": "The server Schema",
+          "type": "string",
+          "default": ""
+        },
+        "path": {
+          "title": "The path Schema",
+          "type": "string",
+          "default": ""
+        },
+        "mode": {
+          "title": "The mode Schema",
+          "type": "string",
+          "default": ""
+        },
+        "mountOptions": {
+          "title": "The mountOptions Schema",
+          "type": "array",
+          "default": [],
+          "items": {
+            "title": "A Schema",
+            "type": "string",
+            "default": ""
+          }
+        }
+      }
+    },
+    "certificate": {
+      "title": "The certificate Schema",
+      "type": "object",
+      "default": {},
+      "required": [
+        "enabled",
+        "duration",
+        "renewBefore",
+        "subject",
+        "organizations",
+        "issuerRef",
+        "name",
+        "kind",
+        "keystoresPasswordSecretRef"
+      ],
+      "properties": {
+        "enabled": {
+          "title": "The enabled Schema",
+          "type": "boolean",
+          "default": false
+        },
+        "duration": {
+          "title": "The duration Schema",
+          "type": "string",
+          "default": ""
+        },
+        "renewBefore": {
+          "title": "The renewBefore Schema",
+          "type": "string",
+          "default": ""
+        },
+        "subject": {
+          "title": "The subject Schema",
+          "type": "object",
+          "default": null
+        },
+        "organizations": {
+          "title": "The organizations Schema",
+          "type": "array",
+          "default": [],
+          "items": {
+            "title": "A Schema",
+            "type": "string",
+            "default": ""
+          }
+        },
+        "issuerRef": {
+          "title": "The issuerRef Schema",
+          "type": "object",
+          "default": null
+        },
+        "name": {
+          "title": "The name Schema",
+          "type": "string",
+          "default": ""
+        },
+        "kind": {
+          "title": "The kind Schema",
+          "type": "string",
+          "default": ""
+        },
+        "keystoresPasswordSecretRef": {
+          "title": "The keystoresPasswordSecretRef Schema",
+          "type": "object",
+          "default": {},
+          "required": [
+            "key",
+            "name"
+          ],
+          "properties": {
+            "key": {
+              "title": "The key Schema",
+              "type": "string",
+              "default": ""
+            },
+            "name": {
+              "title": "The name Schema",
+              "type": "string",
+              "default": ""
+            }
+          }
+        }
+      }
+    },
+    "nameOverride": {
+      "title": "The nameOverride Schema",
+      "type": "string",
+      "default": ""
+    },
+    "hz_min_members": {
+      "title": "The hz_min_members Schema",
+      "type": "string",
+      "default": "",
+      "minLength": 1
+    },
+    "s3_payload": {
+      "title": "The s3_payload Schema",
+      "type": "string",
+      "default": "",
+      "pattern": "^(true|false)$"
+    },
+    "event": {
+      "title": "The event Schema",
+      "type": "string",
+      "default": "",
+      "minLength": 1
+    },
+    "component": {
+      "title": "The component Schema",
+      "type": "string",
+      "default": "",
+      "minLength": 1
+    },
+    "sftp_server_port": {
+      "title": "The sftp_server_port Schema",
+      "type": "string",
+      "default": "",
+      "minLength": 1
+    },
+    "enable_audits": {
+      "title": "The enable_audits Schema",
+      "type": "string",
+      "default": "",
+      "pattern": "^(true|false)$"
+    },
+    "async_audits": {
+      "title": "The async_audits Schema",
+      "type": "string",
+      "default": "",
+      "pattern": "^(true|false)$"
+    },
+    "enable_transaction_logs": {
+      "title": "The enable_transaction_logs Schema",
+      "type": "string",
+      "default": "",
+      "pattern": "^(true|false)$"
+    },
+    "admin_email": {
+      "title": "The admin_email Schema",
+      "type": "string",
+      "minLength": 1,
+      "default": ""
+    },
+    "dxchange_email_host": {
+      "title": "The dxchange_email_host Schema",
+      "type": "string",
+      "default": "",
+      "minLength": 1
+    },
+    "dxchange_email_port": {
+      "title": "The dxchange_email_port Schema",
+      "type": "string",
+      "default": ""
+    },
+    "dxchange_email_authentication": {
+      "title": "The dxchange_email_authentication Schema",
+      "type": "boolean",
+      "default": true
+    },
+    "dxchange_email_usetls": {
+      "title": "The dxchange_email_usetls Schema",
+      "type": "boolean",
+      "default": true
+    },
+    "dxchange_email_username": {
+      "title": "The dxchange_email_username Schema",
+      "type": "string",
+      "default": "",
+      "minLength": 0
+    },
+    "acceptGeneralConditions": {
+      "title": "The acceptGeneralConditions Schema",
+      "type": "string",
+      "default": "",
+      "pattern": "^(yes|no)$"
+    },
+    "cluster_name": {
+      "title": "The cluster_name Schema",
+      "type": "string",
+      "default": "",
+      "minLength": 1
+    },
+    "cluster_type": {
+      "title": "The cluster_type Schema",
+      "type": "string",
+      "default": "",
+      "minLength": 1
+    },
+    "clusterRefId": {
+      "title": "The clusterRefId Schema",
+      "type": "string",
+      "default": ""
+    },
+    "domain": {
+      "title": "The domain Schema",
+      "type": "string",
+      "default": "",
+      "minLength": 1
+    },
+    "tenant": {
+      "title": "The tenant Schema",
+      "type": "string",
+      "default": "",
+      "minLength": 1
+    },
+    "mode": {
+      "title": "The mode Schema",
+      "type": "string",
+      "default": "",
+      "minLength": 1
+    },
+    "cert_name": {
+      "title": "The cert_name Schema",
+      "type": "string",
+      "default": "",
+      "minLength": 4
+    },
+    "truststore": {
+      "title": "The truststore Schema",
+      "type": "string",
+      "default": "",
+      "minLength": 5
+    },
+    "serverCertPassword": {
+      "title": "The serverCertPassword Schema",
+      "type": "string",
+      "default": "",
+      "minLength": 1
+    },
+    "sftpServerCertPassword": {
+      "title": "The sftpServerCertPassword Schema",
+      "type": "string",
+      "default": "",
+      "minLength": 1
+    },
+    "serverTruststorePassword": {
+      "title": "The serverTruststorePassword Schema",
+      "type": "string",
+      "default": "",
+      "minLength": 1
+    },
+    "dockerconfigjson": {
+      "title": "The dockerconfigjson Schema",
+      "type": "string",
+      "default": "",
+      "minLength": 1
+    },
+    "fromMailId": {
+      "title": "The fromMailId Schema",
+      "type": "string",
+      "default": "",
+      "minLength": 1
+    },
+    "fromMailPassword": {
+      "title": "The fromMailPassword Schema",
+      "type": "string",
+      "default": ""
+    },
+    "mcAdminUser": {
+      "title": "The mcAdminUser Schema",
+      "type": "string",
+      "default": "",
+      "minLength": 1
+    },
+    "mcAdminPassword": {
+      "title": "The mcAdminPassword Schema",
+      "type": "string",
+      "default": "",
+      "minLength": 1
+    },
+    "jwtSecret": {
+      "title": "The jwtSecret Schema",
+      "type": "string",
+      "default": "",
+      "minLength": 1
+    },
+    "clusterId": {
+      "title": "The clusterId Schema",
+      "type": "string",
+      "default": "",
+      "minLength": 1
+    },
+    "secrets": {
+      "title": "The secrets Schema",
+      "type": "array",
+      "default": [],
+      "items": {
+        "title": "A Schema",
+        "type": "object",
+        "required": [
+          "name",
+          "data"
+        ],
+        "properties": {
+          "name": {
+            "title": "The name Schema",
+            "type": "string"
+          },
+          "data": {
+            "title": "The data Schema",
+            "type": "object",
+            "properties": {
+              "server_truststore_password": {
+                "title": "The server_truststore_password Schema",
+                "type": "string",
+                "default": "",
+                "minLength": 1
+              },
+              "server_cert_password": {
+                "title": "The server_cert_password Schema",
+                "type": "string",
+                "default": "",
+                "minLength": 1
+              },
+              "sftp_server_cert_password": {
+                "title": "The sftp_server_cert_password Schema",
+                "type": "string",
+                "default": "",
+                "minLength": 1
+              },
+              "MC_ADMIN_USER": {
+                "title": "The MC_ADMIN_USER Schema",
+                "type": "string",
+                "default": "",
+                "minLength": 1
+              },
+              "MC_ADMIN_PASSWORD": {
+                "title": "The MC_ADMIN_PASSWORD Schema",
+                "type": "string",
+                "default": "",
+                "minLength": 1
+              },
+              ".dockerconfigjson": {
+                "title": "The .dockerconfigjson Schema",
+                "type": "string",
+                "default": "",
+                "minLength": 1
+              },
+              "dxchange_jwt_secret": {
+                "title": "The dxchange_jwt_secret Schema",
+                "type": "string",
+                "default": "",
+                "minLength": 1
+              },
+              "cluster_id": {
+                "title": "The cluster_id Schema",
+                "type": "string",
+                "default": "",
+                "minLength": 1
+              },
+              "dxchange_email_frommailid": {
+                "title": "The dxchange_email_frommailid Schema",
+                "type": "string",
+                "default": "",
+                "minLength": 1
+              },
+              "dxchange_email_frompassword": {
+                "title": "The dxchange_email_frompassword Schema",
+                "type": "string",
+                "default": "",
+                "minLength": 1
+              }
+            }
+          },
+          "type": {
+            "title": "The type Schema",
+            "type": "string",
+            "default": ""
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ template "hazelcast.appName" . }}
+  namespace: {{ .Release.Namespace }}
+data:
+  JAVA_OPTS: {{ .Values.javaOpts }}
+  kubernetes_service_name: {{ template "hazelcast.appName" . }}
+  environment: "{{ .Values.global.appEnv }}"
+  efs_load_store_queues: "{{ .Values.efs_load_store_queues }}"
+  efs_load_store_maps: "{{ .Values.efs_load_store_maps }}"
+  hz_enable_backpressure: "false"
+  {{- if eq  (include "parent.dataplaneMode" . ) "shared" }}
+  ebs_root: "/mdisk"
+  {{- else }}
+  ebs_root: "/mdisk/clusters/{{ tpl .Values.clusterRefId . }}"
+  {{- end }}

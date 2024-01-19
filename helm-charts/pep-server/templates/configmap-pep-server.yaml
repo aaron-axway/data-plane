@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ template "pep-server.appName" . }}
+  namespace: {{ .Release.Namespace }}
+data:
+  hazelcast_server_ip: "hazelcast-{{ .Values.global.appEnv }}"
+  JAVA_OPTS: "{{ .Values.javaOpts }}"
+  QUARKUS_LOG_CONSOLE_LEVEL: "{{ .Values.QUARKUS_LOG_CONSOLE_LEVEL }}"
+

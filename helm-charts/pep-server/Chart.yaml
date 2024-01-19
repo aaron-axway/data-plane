@@ -1,0 +1,6 @@
+apiVersion: v2
+name: pep-server
+description: Amplify Integration Policy Enforcement Point Server Helm Chart.
+type: application
+version: 1.4.0
+appVersion: "1.1.0"

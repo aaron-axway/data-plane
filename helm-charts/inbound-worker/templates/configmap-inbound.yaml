@@ -1,0 +1,39 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ template "inbound-worker.appName" . }}
+  namespace: {{ .Release.Namespace }}
+data:
+  hazelcast_server_ip: "hazelcast-{{ .Values.global.appEnv }}"
+  kubernetes_service_name: {{ template "inbound-worker.appName" . }}
+  environment: "{{ .Values.global.appEnv }}"
+  domain: "{{ .Values.global.appEnv }}.{{ .Values.global.external_domain }}"
+  JAVA_OPTS: "{{ .Values.javaOpts }}"
+  sftp_enable: "{{ .Values.sftp_enable }}"
+  http_enable: "{{ .Values.http_enable }}"
+  https_enable: "{{ .Values.https_enable }}"
+  apim_enable: "{{ .Values.apim_enable }}"
+  enable_legacy_tls: "{{ .Values.enable_legacy_tls }}"
+  host_name: "{{ .Values.host_name }}"
+  txn_log_base_path: "{{ .Values.hostPath.enabled | ternary .Values.txn_log_base_path .Values.efs_txn_log_path }}"
+  ebs_root: "{{ .Values.hostPath.enabled | ternary .Values.ebs_root .Values.efs_root_path }}"
+  stale_process_interval: "{{ .Values.stale_process_interval }}"
+  QUARKUS_LOG_CONSOLE_LEVEL: "{{ .Values.QUARKUS_LOG_CONSOLE_LEVEL }}"
+  max_payload_size_kbs: "{{ .Values.max_payload_size_kbs }}"
+  heartbeat_time_interval_sec: "{{ .Values.heartbeat_time_interval_sec }}"
+  heartbeat_timeout_sec: "{{ .Values.heartbeat_timeout_sec }}"
+  timer_failover_hearbeat_in_secs: "{{ .Values.timer_failover_hearbeat_in_secs }}"
+  http_tls_termination: "{{ .Values.http_tls_termination }}"
+  {{- if regexMatch "^ampint-[0-9.]+_[0-9][0-9][0-9][0-9].*$" .Values.image.buildTag }}
+  deployed_version: "{{ regexReplaceAll "^ampint-([0-9.]+)_[0-9][0-9][0-9][0-9].*$" .Values.image.buildTag "${1}" }}"
+  {{- else if regexMatch "^([^_]+)_[0-9][0-9][0-9][0-9].*$" .Values.image.buildTag  }}
+  deployed_version: "{{ regexReplaceAll "^([^_]+)_[0-9][0-9][0-9][0-9].*$" .Values.image.buildTag "${1}" }}"
+  {{- else if regexMatch "^(.+)-SNAPSHOT$" .Values.image.buildTag }}
+  deployed_version: "{{ regexReplaceAll "^(.+)-SNAPSHOT$" .Values.image.buildTag "${1}" }}"
+  {{- end }}
+  {{- if eq  (include "parent.dataplaneMode" . ) "shared" }}
+  aws_route_53_zone_id: "{{ .Values.publicZoneId }}"
+  aws_route_53_region: {{ .Values.region }}
+  haproxy_eip: ha-lb.{{ .Values.global.appEnv }}.{{ .Values.global.external_domain }}
+  {{- end }}
+

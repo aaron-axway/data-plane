@@ -1,0 +1,123 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ template "sink-agent.appName" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "sink-agent.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  serviceName: {{ template "sink-agent.appName" . }}
+  selector:
+    matchLabels:
+      {{- include "sink-agent.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "sink-agent.selectorLabels" . | nindent 8 }}
+    spec:
+      terminationGracePeriodSeconds: {{ .Values.terminationGracePeriodSeconds }}
+      {{- with .Values.global.image.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- if .Values.serviceAccount.enabled }}
+      serviceAccountName: {{ include "sink-agent.serviceAccountName" . }}
+      {{- end }}
+      {{- if .Values.podSecurityContextEnabled }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      {{- end }}
+      dnsConfig:
+        options:
+          - name: use-vc
+      initContainers:
+        - name: {{ .Chart.Name }}-init
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: docker.repository.axway.com/amplifyintegration-docker-prod/1.0.0/alpine-curl-jq:latest
+          imagePullPolicy: {{ .Values.global.image.pullPolicy }}
+          command:
+            - "/bin/sh"
+            - "-c"
+            - "hazelcastIp=\"hazelcast-{{ .Values.global.appEnv }}.{{ .Release.Namespace }}.svc.cluster.local\";
+              until [ \"$(curl -s $hazelcastIp:5701/hazelcast/health | jq '.clusterState==\"ACTIVE\" and .nodeState==\"ACTIVE\"
+              and .clusterSafe==true and .clusterSize>=2')\" = \"true\" ];  do
+                printf \"Waiting for hazelcast ...\n\";
+                sleep 2;
+              done"
+      containers:
+        - name: {{ template "sink-agent.appName" . }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.global.image.repository }}/{{ .Values.image.name }}:{{ .Values.image.buildTag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.global.image.pullPolicy }}
+          envFrom:
+            - secretRef:
+                name: "cluster-details"
+            {{- if ne  (include "parent.dataplaneMode" . ) "shared" }}
+            - secretRef:
+                name: "ampint-frommail"
+            {{- end }}
+            - configMapRef:
+                name: configmap-common
+            - configMapRef:
+                name: {{ template "sink-agent.appName" . }}
+          env:
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: local_ip
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP
+          ports:
+            - containerPort: 5555
+              name: agent
+          volumeMounts:
+            - name: {{ .Values.global.volumeStorageName }}
+              mountPath: /efs
+            - name: tmpdir
+              mountPath: /tmp
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          livenessProbe:
+            httpGet:
+              path: /sinkagent/health
+              port: 8080
+            initialDelaySeconds: {{ .Values.livenessProbeInitialDelaySeconds }}
+            periodSeconds: {{ .Values.livenessProbePeriodSeconds }}
+            failureThreshold: {{ .Values.livenessProbeFailureThreshold }}
+            successThreshold: 1
+            timeoutSeconds: {{ .Values.livenessProbeTimeoutSeconds }}
+          startupProbe:
+            httpGet:
+              path: /openapi
+              port: 8080
+            failureThreshold: {{ .Values.startupProbeFailureThreshold}}
+            successThreshold: 1
+            periodSeconds: {{ .Values.startupProbePeriodSeconds }}
+            timeoutSeconds: {{ .Values.startupProbeTimeoutSeconds }}
+      volumes:
+      - name: tmpdir
+        emptyDir: {}
+      - name: {{ .Values.global.volumeStorageName}}
+        persistentVolumeClaim:
+          claimName: {{ .Release.Namespace }}-{{ .Values.global.claimName }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

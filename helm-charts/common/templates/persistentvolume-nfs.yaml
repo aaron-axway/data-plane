@@ -1,0 +1,32 @@
+{{- if and .Values.nfs.staticPvc .Values.nfs.enabled -}}
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: {{ .Release.Namespace }}-{{ .Values.persistence.volumeName }}
+spec:
+  capacity:
+    # This doesn't matter for efs, but k8s requires this field to exist
+    storage: {{ .Values.persistence.volumeCapacity }}
+  volumeMode: Filesystem
+  accessModes:
+    - {{ .Values.persistence.volumeAccessMode  }}
+  persistentVolumeReclaimPolicy: {{ .Values.persistence.volumeReclaimPolicy }}
+  storageClassName: "{{ .Values.nfs.storageClassName }}"
+  claimRef:
+    name: {{ .Release.Namespace }}-{{ .Values.global.claimName }}
+    namespace: {{ .Release.Namespace }}
+  mountOptions: {{ toYaml .Values.nfs.mountOptions | nindent 2 }}
+  {{- if eq .Values.nfs.mode "csi" }}
+  csi:
+    driver: nfs.csi.k8s.io
+    readOnly: false
+    volumeHandle: {{ .Values.nfs.server }}{{ .Values.nfs.path }}
+    volumeAttributes:
+      server: {{ .Values.nfs.server }}
+      share: {{ .Values.nfs.path }}
+  {{- else -}}
+  nfs:
+    path: {{ .Values.nfs.path }}
+    server: {{ .Values.nfs.server }}
+  {{- end -}}
+{{- end -}}

@@ -1,0 +1,6 @@
+apiVersion: v2
+name: common
+description: Amplify Integration Common Helm Chart.
+type: application
+version: 1.4.0
+appVersion: "1.1.0"

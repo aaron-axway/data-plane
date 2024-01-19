@@ -1,0 +1,96 @@
+######################################
+##      Globals                     ##
+######################################
+
+global:
+  #image settings
+  image:
+    #repository the docker repository which will have the image
+    repository: eipaas-docker-snapshot.artifactory.axway.com
+    #pullPolicy the image pull policy
+    pullPolicy: IfNotPresent
+    #imagePullSecrets secret that stores credentials for access to a registry for docker images
+    imagePullSecrets:
+      - name: ampint-docker-artifactory
+
+  # Chose here the HOSTNAME for your dataplane:
+  #    it will be: appEnv.external_domain (for example here: env.your-dataplane-domain.com)
+  appEnv: env
+  #external_domain domain name for environment
+  external_domain: ""
+
+  # claimName a reference to the file share claim name
+  claimName: sharedstorage-claim
+  # volumeStorageName the volume name of the persistent fileshare
+  volumeStorageName: fileshare-storage
+  # clusterKey is obtained from the Control Plane User Interface
+  clusterKey: ""
+
+######################################
+##      Image                       ##
+######################################
+#enable/disable the cache copy job
+cacheCopy:
+  enabled: true
+
+image:
+  name: cache-copy-job
+  buildTag: ampint-1.0_2023-02-14T09_31_50Z
+  #If its azure use the azurefile
+azureFiles:
+  # when using azure files for the backing shared persistent volume, with the SMB protocole, you can use this option to facilitate the upgrade
+  forceCloseHandles:
+    enabled: false
+    # the storage account for your fileshare
+    storageAccount: "prf01ampintddpsa01"
+    # the fileshare name
+    fileshare: "prf01ampintddpafs01"
+    # the client id for the managed identity, assigned to your VM Scaling sets
+    # it must have the role "Storage File Data Privileged Reader" (scope "storage", resource: your storage account)
+    vmssManagedIdentityClientId: "bdjfbjefbjsfsf-fdfsdf-ddg"
+
+######################################
+##      Security                    ##
+######################################
+
+podSecurityContextEnabled: true
+
+podSecurityContext:
+  runAsUser: 10010
+  runAsGroup: 10020
+  fsGroup: 10020
+  supplementalGroups:
+    - 1001
+
+securityContext:
+  seccompProfile:
+    type: RuntimeDefault
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+      - ALL
+  readOnlyRootFilesystem: true
+  runAsNonRoot: true
+  runAsUser: 10010
+
+#serviceaccount for predeploy
+serviceAccount:
+  enabled: true
+  # Use preexisting: true if you want to use a preexisting service account (e.g. created by the infra)
+  preexisting: false
+  annotations: {}
+  name: "predeploy"
+  automountServiceAccountToken: true
+
+podSecurityPolicy:
+  # only applied if serviceAccount is enabled
+  # will bind that service Account to the "restricted" psp
+  # as no special capabilities are required for this service
+  enabled: true
+
+######################################
+##      Network Policies            ##
+######################################
+calicoNetpol:
+  enabled: false
+

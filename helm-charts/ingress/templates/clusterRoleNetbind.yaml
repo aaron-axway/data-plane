@@ -1,0 +1,15 @@
+{{ if and .Values.serviceAccount.enabled .Values.podSecurityPolicy.enabled }}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: {{ .Release.Namespace }}-{{ include "ingress.serviceAccountName" . }}-netbind
+rules:
+  - apiGroups:
+      - policy
+    resourceNames:
+      - {{ .Release.Namespace }}-{{ include "ingress.serviceAccountName" . }}-netbind
+    resources:
+      - podsecuritypolicies
+    verbs:
+      - use
+{{- end }}

@@ -1,0 +1,211 @@
+######################################
+##      Globals                     ##
+######################################
+
+global:
+  #image settings
+  image:
+    #repository the docker repository which will have the image
+    repository: eipaas-docker-snapshot.artifactory.axway.com
+    #pullPolicy the image pull policy
+    pullPolicy: IfNotPresent
+
+  # Chose here the HOSTNAME for your dataplane:
+  #    it will be: appEnv.external_domain (for example here: env.your-dataplane-domain.com)
+  appEnv: env
+  #external_domain domain name for environment
+  external_domain: ""
+
+  # claimName a reference to the file share claim name
+  claimName: sharedstorage-claim
+  # volumeStorageName the volume name of the persistent fileshare
+  volumeStorageName: fileshare-storage
+  # clusterKey is obtained from the Control Plane User Interface
+  clusterKey: ""
+
+######################################
+##      Persistence                 ##
+######################################
+
+#common settings for persistence of data
+persistence:
+  # claimRequestCapacity the claim's requested storage capacity size
+  claimRequestCapacity: 5Gi
+  # claimAccessMode the claim's mount access mode
+  claimAccessMode: ReadWriteMany
+  # volumeCapacity the volume's name
+  volumeName: shared-volume
+  # volumeCapacity the volume's storage capacity size
+  volumeCapacity: 5Gi
+  # volumeReclaimPolicy the volume's reclaim policy
+  volumeReclaimPolicy: Retain
+  # volumeAccessMode the volume's mount mode
+  volumeAccessMode: ReadWriteMany
+
+
+  ## Azure Files ##
+azfiles:
+  enabled: false # set it to true
+  ## Azure FileShare ##
+  #If you are using Azure FileShare, modify settings in here
+
+  resourceGroup: "" # where AKS cluster is installed ex: prf01-ampint-ddp-rg01
+  storageAccountName: "" # Storage account name where file storage created ex: prf02ampintddpsa01
+  fileshareName: "" # Name of your fileshare tst01ampintdd02afs01
+  # azurefs-secret this secret is used to get access to azure file system storage use storage account name and its key values.
+  azureStorageAccountName: ""  # Storage account name where file storage created ex: prf02ampintddpsa01
+  azureStorageAccountKey: ""   # Storage account key1 value base 64 encoded password to configure: printf 'password14' | base64 -w 0
+
+
+## Amazon EFS ##
+#If you are using Amazon EFS, modify settings in here
+efs:
+  enabled: false # set it to true
+  #volumeHandle the volume handle name. Composition of EFS "file system id::access point id". example fs-xxxxxxxxx::fsap-xxxxxxxxx
+  volumeHandle: ""
+
+  ## Standard NFS ##
+  #If you are using Standard NFS, modify settings in here
+nfs:
+  enabled: false # set it to true
+  staticPvc: false # if there is already NFS-server is ready, make this staticPvc false.
+  storageClassName: "" #provide the storageClassName
+  server: "" # example - fs-003ea2414e03f749d.efs.ap-south-1.amazonaws.com # put your nfs server info here
+  path: / # if you are not using / but a subdirectory, then make sure it already exists. Make sure gid 1001 is allowed to rw in that directory (e.g. perform a chown 1001:1001 . in your NFS)
+
+  # use csi or nfs depending on how you want to mount the volume directly as nfs or through the nfs csi driver
+  # if you use csi, make sure you have installed the csi driver:
+  #       helm repo add csi-driver-nfs https://raw.githubusercontent.com/kubernetes-csi/csi-driver-nfs/master/charts
+  #       helm install csi-driver-nfs csi-driver-nfs/csi-driver-nfs --namespace kube-system --version v4.1.0
+  mode: csi
+  mountOptions:
+    - nfsvers=4.1 # put your mount options here, as a yaml list
+
+######################################
+##      Security                    ##
+######################################
+
+#Certificate generates
+certificate:
+  # enable if you have cert-manager configured and want to use it to generate your certificate
+  # warning: if cert-manager isn't installed already, the certificate CRD may not be exist yet, and your installation will be rejected
+  # warning: this relies on the cert-p12 secret created in this chart to get a password for the stores
+  enabled: false
+  #duration that the cert is valid for
+  duration: 2190h # 3 months
+  #renewBefore cert will be renewed this time before expire date
+  renewBefore: 24h # 1 dau
+  subject:
+  #optional organizations to be used on the certifcate
+  organizations:
+    - mycompany
+  issuerRef:
+  #name -the name of the ClusterIssuer resource in your environment
+  name: letsencrypt-prod
+  kind: ClusterIssuer
+  keystoresPasswordSecretRef:
+    key: server_cert_password
+    name: cert-p12
+
+######################################
+##      Environment                 ##
+######################################
+
+#Environments properties
+nameOverride: ""
+hz_min_members: "2"
+s3_payload: "false"
+
+#caches Paths
+event: /efs/event-cache
+component: /efs/component-cache
+sftp_server_port: "2222"
+
+#audits
+enable_audits: "true"
+async_audits: "true"
+enable_transaction_logs: "true"
+
+#email details
+
+# common to shared/dedicated dataplanes
+admin_email: ""
+dxchange_email_host: ""
+
+#email details dedicated
+dxchange_email_authentication: true
+dxchange_email_port: ""
+dxchange_email_usetls: true
+dxchange_email_username: ""
+
+#email details shared dataplane
+support_email: ""
+
+
+# By setting acceptGeneralConditions to "yes" (required for installation),
+# you hereby accept that the Axway Products and/or Services shall be governed exclusively by the Axway General Terms and Conditions located at Axway General Conditions,
+# https://www.axway.com/sites/default/files/Legal_documents/License_general_conditions/Axway_General_Conditions_version_april_2014_eng_(France).pdf
+# unless an agreement has been signed with Axway in which case such agreement shall apply.
+acceptGeneralConditions: "no"
+
+#Provide control plane information for clustering
+cluster_name: "{{ (eq .Values.global.clusterKey \"\") | ternary \"Shared Data Plane\" (printf \"%s\" (.Values.global.clusterKey | b64dec | fromJson).name) }}"
+cluster_type: "{{ (eq .Values.global.clusterKey \"\") | ternary \"MANAGED_SHARED\" (printf \"%s\" (.Values.global.clusterKey | b64dec | fromJson).runtimeType) }}"
+clusterRefId: "{{ (eq .Values.global.clusterKey \"\") | ternary \"\" (printf \"%s\" (.Values.global.clusterKey | b64dec | fromJson).clusterRefId) }}"
+domain: "{{ (eq .Values.global.clusterKey \"\") | ternary (printf \"%s.%s\" .Values.global.appEnv .Values.global.external_domain) (printf \"%s\" (.Values.global.clusterKey | b64dec | fromJson).domain ) }}"
+tenant: "{{ (eq .Values.global.clusterKey \"\") | ternary \"shared\" (printf \"%s\" (.Values.global.clusterKey | b64dec | fromJson).tenant) }}"
+mode: "{{ (eq .Values.global.clusterKey \"\") | ternary \"shared\" (printf \"%s\" (.Values.global.clusterKey | b64dec | fromJson).mode) }}"
+cert_name: mykey.p12
+truststore: truststore.jks
+
+#Secrets
+# cert-p12 secret settings
+# All three values of this "cert-p12" secret need to be the same: the password for your PKCS 12 store (certificate + key for your dedicated Data Plane hostname)
+#      If you already have your PKCS 12 already, set the password you used to create it, or else select one now
+serverCertPassword: ""       # base 64 encoded PKCS 12 password:     printf 'mystorepassword' | base64 -w 0
+sftpServerCertPassword: ""   # base 64 encoded PKCS 12 password:     printf 'mystorepassword' | base64 -w 0
+serverTruststorePassword: "" # base 64 encoded PKCS 12 password:     printf 'mystorepassword' | base64 -w 0
+
+# ampint-docker-artifactory secret settings
+# This secret is the image pull secrets used by all the charts
+# For a customer: create a service account of type "Client Secret" on the Amplify Repository, and generate the .dockerconfigjson value with:
+#      REGISTRY_USERNAME= # credentials from your service account
+#      REGISTRY_PASSWORD= # credentials from your service account
+#      REGISTRY_SERVER=docker.repository.axway.com
+#      kubectl create secret docker-registry ampint-docker-artifactory --docker-server="${REGISTRY_SERVER}" --docker-username="${REGISTRY_USERNAME}" --docker-password="${REGISTRY_PASSWORD}" --dry-run=client --output=jsonpath="{.data.\.dockerconfigjson}"
+dockerconfigjson: ""
+
+# ampint-frommail secret settings. shared dataplane does not need the password
+# This secret allow the Data Plane to send emails from a valid email address that you control. Fill in with valid, preexisting credentials
+fromMailId: ""       # base 64 encoded credentials:     printf 'myemail@example.com' | base64 -w 0 (for shared this value doesn't need to be base64 encocded)
+fromMailPassword: "" # base 64 encoded credentials:     printf 'mypassword' | base64 -w 0 (not required for shared dataplane)
+
+# management-center-credentials secret settings
+# Select here the credentials to use for the optional Hazelcast UI (a service only used for debug purpose)
+# whoever have access for data-plane they can only access management-center UI.
+# once deployment is completed, if you want to access use kubectl port-forward command.
+# kubectl port-forward svc/<management-center-svc-name> 9090:8080 -n <namespace>
+mcAdminUser: "YWRtaW4=" # the default user is admin, please keep this one for now
+mcAdminPassword: "" # base 64 encoded password to configure:     printf 'password14' | base64 -w 0
+
+jwtSecret: "{{ (eq .Values.global.clusterKey \"\") | ternary \"\" (printf \"%s\" (.Values.global.clusterKey | b64dec | fromJson).secretKey | b64enc) }}"
+clusterId: "{{ (eq .Values.global.clusterKey \"\") | ternary \"\" (printf \"%s\" (.Values.global.clusterKey | b64dec | fromJson).id | b64enc) }}"
+
+secrets:
+  - name: cert-p12
+    data:
+      server_truststore_password: "{{ .Values.serverTruststorePassword}}" # base64 encoded : printf '...value...' | base64 -wrap=0
+      server_cert_password: "{{ .Values.serverCertPassword}}" # base64 encoded
+      sftp_server_cert_password: "{{ .Values.sftpServerCertPassword }}" # base64 encoded
+  - name: management-center-credentials
+    data:
+      MC_ADMIN_USER: "{{ .Values.mcAdminUser }}" # base64 encoded
+      MC_ADMIN_PASSWORD: "{{ .Values.mcAdminPassword }}" # base64 encoded
+  - name: ampint-docker-artifactory
+    type: kubernetes.io/dockerconfigjson
+    data:
+      .dockerconfigjson: "{{ .Values.dockerconfigjson }}" # base64 encoded
+  - name: cluster-details
+    data:
+      dxchange_jwt_secret: "{{ tpl .Values.jwtSecret . }}"
+      cluster_id: "{{ tpl .Values.clusterId . }}"

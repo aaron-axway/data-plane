@@ -1,0 +1,35 @@
+{{- if .Values.calicoNetpol.enabled }}
+apiVersion: projectcalico.org/v3
+kind: NetworkPolicy
+metadata:
+  name: {{ template "management-center.appName" .}}
+  namespace: {{ .Release.Namespace }}
+spec:
+  order: 10
+  selector: dplane == 'management-center'
+  types:
+    - Ingress
+    - Egress
+  egress:
+    # allow to communicate to DNS pods
+    - action: Allow
+      protocol: UDP
+      destination:
+        namespaceSelector: projectcalico.org/name == 'kube-system'
+        ports:
+          - 53
+    - action: Allow
+      protocol: TCP
+      destination:
+        namespaceSelector: projectcalico.org/name == 'kube-system'
+        ports:
+          - 53
+    # allow to communicate with hazelcast
+    - action: Allow
+      destination:
+        ports:
+          - 5701
+        selector: dplane == 'hazelcast'
+        namespaceSelector: projectcalico.org/name == '{{ .Release.Namespace }}'
+      protocol: TCP
+{{- end }}

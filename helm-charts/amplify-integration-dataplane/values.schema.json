@@ -1,0 +1,1670 @@
+{
+  "$schema": "https://json-schema.org/draft/2019-09/schema",
+  "$id": "http://example.com/example.json",
+  "type": "object",
+  "default": {},
+  "title": "Root Schema",
+  "required": [
+    "global",
+    "common",
+    "ingress",
+    "hazelcast",
+    "inbound-worker",
+    "orchestrator",
+    "sink-agent",
+    "pep-server",
+    "predeploy",
+    "management-center"
+  ],
+  "properties": {
+    "global": {
+      "type": "object",
+      "default": {},
+      "title": "The global Schema",
+      "required": [
+        "image",
+        "appEnv",
+        "external_domain",
+        "claimName",
+        "volumeStorageName",
+        "clusterKey"
+      ],
+      "properties": {
+        "image": {
+          "type": "object",
+          "default": {},
+          "title": "The image Schema",
+          "required": [
+            "repository",
+            "pullPolicy",
+            "imagePullSecrets"
+          ],
+          "properties": {
+            "repository": {
+              "type": "string",
+              "minLength": 1,
+              "default": "",
+              "title": "The repository Schema",
+              "examples": [
+                "eipaas-docker-snapshot.artifactory.axway.com"
+              ]
+            },
+            "pullPolicy": {
+              "type": "string",
+              "default": "",
+              "minLength": 5,
+              "title": "The pullPolicy Schema",
+              "pattern": "^(Always|Never|IfNotPresent)$",
+              "examples": [
+                "IfNotPresent"
+              ]
+            },
+            "imagePullSecrets": {
+              "type": "array",
+              "minItems": 1,
+              "uniqueItems": true,
+              "default": [],
+              "title": "The imagePullSecrets Schema",
+              "items": {
+                "type": "object",
+                "default": {},
+                "title": "A Schema",
+                "required": [
+                  "name"
+                ],
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "default": "",
+                    "minLength": 1,
+                    "title": "The name Schema",
+                    "examples": [
+                      "ampint-docker-artifactory"
+                    ]
+                  }
+                },
+                "examples": [{
+                  "name": "ampint-docker-artifactory"
+                }]
+              },
+              "examples": [
+                [{
+                  "name": "ampint-docker-artifactory"
+                }]
+              ]
+            }
+          },
+          "examples": [{
+            "repository": "eipaas-docker-snapshot.artifactory.axway.com",
+            "pullPolicy": "IfNotPresent",
+            "imagePullSecrets": [{
+              "name": "ampint-docker-artifactory"
+            }]
+          }]
+        },
+        "appEnv": {
+          "type": "string",
+          "default": "",
+          "minLength": 1,
+          "title": "The appEnv Schema",
+          "examples": [
+            "env"
+          ]
+        },
+        "external_domain": {
+          "type": "string",
+          "default": "",
+          "minLength": 1,
+          "title": "The external_domain Schema",
+          "examples": [
+            ""
+          ]
+        },
+        "claimName": {
+          "type": "string",
+          "default": "",
+          "minLength": 1,
+          "title": "The claimName Schema",
+          "examples": [
+            "sharedstorage-claim"
+          ]
+        },
+        "volumeStorageName": {
+          "type": "string",
+          "default": "",
+          "minLength": 1,
+          "title": "The volumeStorageName Schema",
+          "examples": [
+            "fileshare-storage"
+          ]
+        },
+        "clusterKey": {
+          "type": "string",
+          "default": "",
+          "title": "The clusterKey Schema",
+          "examples": [
+            ""
+          ]
+        }
+      },
+      "examples": [{
+        "image": {
+          "repository": "eipaas-docker-snapshot.artifactory.axway.com",
+          "pullPolicy": "IfNotPresent",
+          "imagePullSecrets": [{
+            "name": "ampint-docker-artifactory"
+          }]
+        },
+        "appEnv": "env",
+        "external_domain": "",
+        "claimName": "sharedstorage-claim",
+        "volumeStorageName": "fileshare-storage",
+        "clusterKey": ""
+      }]
+    },
+    "common": {
+      "type": "object",
+      "default": {},
+      "title": "The common Schema",
+      "required": [
+        "enabled",
+        "cert_name",
+        "admin_email",
+        "dxchange_email_authentication",
+        "dxchange_email_host",
+        "dxchange_email_port",
+        "dxchange_email_username",
+        "acceptGeneralConditions",
+        "serverCertPassword",
+        "sftpServerCertPassword",
+        "serverTruststorePassword",
+        "dockerconfigjson",
+        "fromMailId",
+        "fromMailPassword",
+        "mcAdminUser",
+        "mcAdminPassword",
+        "persistence",
+        "azfiles",
+        "efs",
+        "nfs",
+        "certificate",
+        "enable_audits",
+        "async_audits",
+        "enable_transaction_logs"
+      ],
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": false,
+          "title": "The enabled Schema",
+          "examples": [
+            true
+          ]
+        },
+        "cert_name": {
+          "type": "string",
+          "default": "",
+          "minLength": 1,
+          "title": "The cert_name Schema",
+          "examples": [
+            "mykey.p12"
+          ]
+        },
+        "admin_email": {
+          "type": "string",
+          "default": "",
+          "minLength": 5,
+          "title": "The admin_email Schema",
+          "examples": [
+            ""
+          ]
+        },
+        "dxchange_email_authentication": {
+          "type": "boolean",
+          "default": false,
+          "title": "The dxchange_email_authentication Schema",
+          "examples": [
+            true
+          ]
+        },
+        "dxchange_email_host": {
+          "type": "string",
+          "default": "",
+          "minLength": 1,
+          "title": "The dxchange_email_host Schema",
+          "examples": [
+            ""
+          ]
+        },
+        "dxchange_email_port": {
+          "type": "string",
+          "default": "",
+          "title": "The dxchange_email_port Schema",
+          "examples": [
+            ""
+          ]
+        },
+        "dxchange_email_username,": {
+          "type": "string",
+          "default": "",
+          "format": "email",
+          "minLength": 0,
+          "title": "The dxchange_email_username Schema",
+          "examples": [
+            ""
+          ]
+        },
+        "acceptGeneralConditions": {
+          "type": "string",
+          "default": "",
+          "title": "The acceptGeneralConditions Schema",
+          "examples": [
+            "no"
+          ]
+        },
+        "serverCertPassword": {
+          "type": "string",
+          "default": "",
+          "minLength": 1,
+          "title": "The serverCertPassword Schema",
+          "examples": [
+            ""
+          ]
+        },
+        "sftpServerCertPassword": {
+          "type": "string",
+          "default": "",
+          "minLength": 1,
+          "title": "The sftpServerCertPassword Schema",
+          "examples": [
+            ""
+          ]
+        },
+        "serverTruststorePassword": {
+          "type": "string",
+          "default": "",
+          "minLength": 1,
+          "title": "The serverTruststorePassword Schema",
+          "examples": [
+            ""
+          ]
+        },
+        "dockerconfigjson": {
+          "type": "string",
+          "default": "",
+          "minLength": 1,
+          "title": "The dockerconfigjson Schema",
+          "examples": [
+            ""
+          ]
+        },
+        "fromMailId": {
+          "type": "string",
+          "default": "",
+          "minLength": 1,
+          "title": "The fromMailId Schema",
+          "examples": [
+            ""
+          ]
+        },
+        "fromMailPassword": {
+          "type": "string",
+          "default": "",
+          "title": "The fromMailPassword Schema",
+          "examples": [
+            ""
+          ]
+        },
+        "mcAdminUser": {
+          "type": "string",
+          "default": "",
+          "minLength": 1,
+          "title": "The mcAdminUser Schema",
+          "examples": [
+            "YWRtaW4="
+          ]
+        },
+        "mcAdminPassword": {
+          "type": "string",
+          "default": "",
+          "minLength": 1,
+          "title": "The mcAdminPassword Schema",
+          "examples": [
+            ""
+          ]
+        },
+        "persistence": {
+          "type": "object",
+          "default": {},
+          "title": "The persistence Schema",
+          "required": [
+            "claimRequestCapacity",
+            "volumeCapacity"
+          ],
+          "properties": {
+            "claimRequestCapacity": {
+              "type": "string",
+              "default": "",
+              "minLength": 2,
+              "title": "The claimRequestCapacity Schema",
+              "examples": [
+                "2Gi"
+              ]
+            },
+            "volumeCapacity": {
+              "type": "string",
+              "default": "",
+              "minLength": 2,
+              "title": "The volumeCapacity Schema",
+              "examples": [
+                "2Gi"
+              ]
+            }
+          },
+          "examples": [{
+            "claimRequestCapacity": "2Gi",
+            "volumeCapacity": "2Gi"
+          }]
+        },
+        "azfiles": {
+          "type": "object",
+          "default": {},
+          "title": "The azfiles Schema",
+          "required": [
+            "enabled",
+            "resourceGroup",
+            "storageAccountName",
+            "fileshareName",
+            "azureStorageAccountName",
+            "azureStorageAccountKey"
+          ],
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "default": false,
+              "title": "The enabled Schema",
+              "examples": [
+                false
+              ]
+            },
+            "resourceGroup": {
+              "type": "string",
+              "default": "",
+              "title": "The resourceGroup Schema",
+              "examples": [
+                ""
+              ]
+            },
+            "storageAccountName": {
+              "type": "string",
+              "default": "",
+              "title": "The storageAccountName Schema",
+              "examples": [
+                ""
+              ]
+            },
+            "fileshareName": {
+              "type": "string",
+              "default": "",
+              "title": "The fileshareName Schema",
+              "examples": [
+                ""
+              ]
+            },
+            "azureStorageAccountName": {
+              "type": "string",
+              "default": "",
+              "title": "The azureStorageAccountName Schema",
+              "examples": [
+                ""
+              ]
+            },
+            "azureStorageAccountKey": {
+              "type": "string",
+              "default": "",
+              "title": "The azureStorageAccountKey Schema",
+              "examples": [
+                ""
+              ]
+            }
+          },
+          "examples": [{
+            "enabled": false,
+            "resourceGroup": "",
+            "storageAccountName": "",
+            "fileshareName": "",
+            "azureStorageAccountName": "",
+            "azureStorageAccountKey": ""
+          }]
+        },
+        "efs": {
+          "type": "object",
+          "default": {},
+          "title": "The efs Schema",
+          "required": [
+            "enabled",
+            "volumeHandle"
+          ],
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "default": false,
+              "title": "The enabled Schema",
+              "examples": [
+                false
+              ]
+            },
+            "volumeHandle": {
+              "type": "string",
+              "default": "",
+              "title": "The volumeHandle Schema",
+              "examples": [
+                ""
+              ]
+            }
+          },
+          "examples": [{
+            "enabled": false,
+            "volumeHandle": ""
+          }]
+        },
+        "nfs": {
+          "type": "object",
+          "default": {},
+          "title": "The nfs Schema",
+          "required": [
+            "enabled",
+            "staticPvc",
+            "storageClassName",
+            "server",
+            "path",
+            "mode",
+            "mountOptions"
+          ],
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "default": false,
+              "title": "The enabled Schema",
+              "examples": [
+                false
+              ]
+            },
+            "staticPvc": {
+              "type": "boolean",
+              "default": false,
+              "title": "The staticPvc Schema",
+              "examples": [
+                false
+              ]
+            },
+            "storageClassName": {
+              "type": "string",
+              "default": "",
+              "title": "The storageClassName Schema",
+              "examples": [
+                ""
+              ]
+            },
+            "server": {
+              "type": "string",
+              "default": "",
+              "title": "The server Schema",
+              "examples": [
+                ""
+              ]
+            },
+            "path": {
+              "type": "string",
+              "default": "",
+              "title": "The path Schema",
+              "examples": [
+                "/"
+              ]
+            },
+            "mode": {
+              "type": "string",
+              "default": "",
+              "title": "The mode Schema",
+              "examples": [
+                "csi"
+              ]
+            },
+            "mountOptions": {
+              "type": "array",
+              "default": [],
+              "title": "The mountOptions Schema",
+              "items": {
+                "type": "string",
+                "default": "",
+                "title": "A Schema",
+                "examples": [
+                  "nfsvers=4.1"
+                ]
+              },
+              "examples": [
+                [
+                  "nfsvers=4.1"]
+              ]
+            }
+          },
+          "examples": [{
+            "enabled": false,
+            "staticPvc": false,
+            "storageClassName": "",
+            "server": "",
+            "path": "/",
+            "mode": "csi",
+            "mountOptions": [
+              "nfsvers=4.1"
+            ]
+          }]
+        },
+        "certificate": {
+          "type": "object",
+          "default": {},
+          "title": "The certificate Schema",
+          "required": [
+            "enabled",
+            "duration",
+            "renewBefore",
+            "subject",
+            "issuerRef",
+            "keystoresPasswordSecretRef"
+          ],
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "default": false,
+              "title": "The enabled Schema",
+              "examples": [
+                false
+              ]
+            },
+            "duration": {
+              "type": "string",
+              "default": "",
+              "title": "The duration Schema",
+              "examples": [
+                "2190h"
+              ]
+            },
+            "renewBefore": {
+              "type": "string",
+              "default": "",
+              "title": "The renewBefore Schema",
+              "examples": [
+                "24h"
+              ]
+            },
+            "subject": {
+              "type": "object",
+              "default": {},
+              "title": "The subject Schema",
+              "required": [
+                "organizations"
+              ],
+              "properties": {
+                "organizations": {
+                  "type": "array",
+                  "default": [],
+                  "title": "The organizations Schema",
+                  "items": {
+                    "type": "string",
+                    "default": "",
+                    "title": "A Schema",
+                    "examples": [
+                      "mycompany"
+                    ]
+                  },
+                  "examples": [
+                    [
+                      "mycompany"]
+                  ]
+                }
+              },
+              "examples": [{
+                "organizations": [
+                  "mycompany"
+                ]
+              }]
+            },
+            "issuerRef": {
+              "type": "object",
+              "default": {},
+              "title": "The issuerRef Schema",
+              "required": [
+                "name",
+                "kind"
+              ],
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "default": "",
+                  "title": "The name Schema",
+                  "examples": [
+                    "letsencrypt-prod"
+                  ]
+                },
+                "kind": {
+                  "type": "string",
+                  "default": "",
+                  "title": "The kind Schema",
+                  "examples": [
+                    "ClusterIssuer"
+                  ]
+                }
+              },
+              "examples": [{
+                "name": "letsencrypt-prod",
+                "kind": "ClusterIssuer"
+              }]
+            },
+            "keystoresPasswordSecretRef": {
+              "type": "object",
+              "default": {},
+              "title": "The keystoresPasswordSecretRef Schema",
+              "required": [
+                "key",
+                "name"
+              ],
+              "properties": {
+                "key": {
+                  "type": "string",
+                  "default": "",
+                  "title": "The key Schema",
+                  "examples": [
+                    "server_cert_password"
+                  ]
+                },
+                "name": {
+                  "type": "string",
+                  "default": "",
+                  "title": "The name Schema",
+                  "examples": [
+                    "cert-p12"
+                  ]
+                }
+              },
+              "examples": [{
+                "key": "server_cert_password",
+                "name": "cert-p12"
+              }]
+            }
+          },
+          "examples": [{
+            "enabled": false,
+            "duration": "2190h",
+            "renewBefore": "24h",
+            "subject": {
+              "organizations": [
+                "mycompany"
+              ]
+            },
+            "issuerRef": {
+              "name": "letsencrypt-prod",
+              "kind": "ClusterIssuer"
+            },
+            "keystoresPasswordSecretRef": {
+              "key": "server_cert_password",
+              "name": "cert-p12"
+            }
+          }]
+        },
+        "enable_audits": {
+          "type": "string",
+          "default": "",
+          "title": "The enable_audits Schema",
+          "examples": [
+            "true"
+          ]
+        },
+        "async_audits": {
+          "type": "string",
+          "default": "",
+          "title": "The async_audits Schema",
+          "examples": [
+            "true"
+          ]
+        },
+        "enable_transaction_logs": {
+          "type": "string",
+          "default": "",
+          "title": "The enable_transaction_logs Schema",
+          "examples": [
+            "true"
+          ]
+        }
+      },
+      "examples": [{
+        "enabled": true,
+        "cert_name": "mykey.p12",
+        "admin_email": "",
+        "dxchange_email_authentication": true,
+        "dxchange_email_host": "",
+        "dxchange_email_port": "",
+        "dxchange_email_username": "",
+        "acceptGeneralConditions": "no",
+        "serverCertPassword": "",
+        "sftpServerCertPassword": "",
+        "serverTruststorePassword": "",
+        "dockerconfigjson": "",
+        "fromMailId": "",
+        "fromMailPassword": "",
+        "mcAdminUser": "YWRtaW4=",
+        "mcAdminPassword": "",
+        "persistence": {
+          "claimRequestCapacity": "2Gi",
+          "volumeCapacity": "2Gi"
+        },
+        "azfiles": {
+          "enabled": false,
+          "resourceGroup": "",
+          "storageAccountName": "",
+          "fileshareName": "",
+          "azureStorageAccountName": "",
+          "azureStorageAccountKey": ""
+        },
+        "efs": {
+          "enabled": false,
+          "volumeHandle": ""
+        },
+        "nfs": {
+          "enabled": false,
+          "staticPvc": false,
+          "storageClassName": "",
+          "server": "",
+          "path": "/",
+          "mode": "csi",
+          "mountOptions": [
+            "nfsvers=4.1"
+          ]
+        },
+        "certificate": {
+          "enabled": false,
+          "duration": "2190h",
+          "renewBefore": "24h",
+          "subject": {
+            "organizations": [
+              "mycompany"
+            ]
+          },
+          "issuerRef": {
+            "name": "letsencrypt-prod",
+            "kind": "ClusterIssuer"
+          },
+          "keystoresPasswordSecretRef": {
+            "key": "server_cert_password",
+            "name": "cert-p12"
+          }
+        },
+        "enable_audits": "true",
+        "async_audits": "true",
+        "enable_transaction_logs": "true"
+      }]
+    },
+    "ingress": {
+      "type": "object",
+      "default": {},
+      "title": "The ingress Schema",
+      "required": [
+        "enabled",
+        "calicoNetpol",
+        "timeouts"
+      ],
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": false,
+          "title": "The enabled Schema",
+          "examples": [
+            true
+          ]
+        },
+        "timeouts": {
+          "type": "object",
+          "default": {},
+          "title": "The ingress timeouts Schema",
+          "required": [],
+          "properties": {
+            "loadbalancer": {
+              "type": "integer",
+              "default": 3700,
+              "title": "The loadbalancer timeout duration in seconds",
+              "examples": [
+                3700
+              ]
+            },
+            "maxDuration": {
+              "type": "string",
+              "default": "3600s",
+              "title": "The maximum lifetime of a request",
+              "examples": [
+                "3600s"
+              ]
+            },
+            "idleTimeout": {
+              "type": "string",
+              "default": "3600s",
+              "title": "The idle timeout for requests and responses",
+              "examples": [
+                "3600s"
+              ]
+            },
+            "connectTimeout": {
+              "type": "string",
+              "default": "15s",
+              "title": "The upstream connect timeout",
+              "examples": [
+                "15s"
+              ]
+            }
+          }
+        },
+        "calicoNetpol": {
+          "type": "object",
+          "default": {},
+          "title": "The calicoNetpol Schema",
+          "required": [
+            "enabled",
+            "subnetEntityRule"
+          ],
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "default": false,
+              "title": "The enabled Schema",
+              "examples": [
+                false
+              ]
+            },
+            "subnetEntityRule": {
+              "type": "object",
+              "default": {},
+              "title": "The subnetEntityRule Schema",
+              "required": [
+                "selector"
+              ],
+              "properties": {
+                "selector": {
+                  "type": "string",
+                  "default": "",
+                  "title": "The selector Schema",
+                  "examples": [
+                    "role == 'nodes-subnet-vpc-cidr'"
+                  ]
+                }
+              },
+              "examples": [{
+                "selector": "role == 'nodes-subnet-vpc-cidr'"
+              }]
+            }
+          },
+          "examples": [{
+            "enabled": false,
+            "subnetEntityRule": {
+              "selector": "role == 'nodes-subnet-vpc-cidr'"
+            }
+          }]
+        }
+      },
+      "examples": [{
+        "enabled": true,
+        "calicoNetpol": {
+          "enabled": false,
+          "subnetEntityRule": {
+            "selector": "role == 'nodes-subnet-vpc-cidr'"
+          }
+        }
+      }]
+    },
+    "hazelcast": {
+      "type": "object",
+      "default": {},
+      "title": "The hazelcast Schema",
+      "required": [
+        "enabled",
+        "persistence",
+        "calicoNetpol"
+      ],
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": false,
+          "title": "The enabled Schema",
+          "examples": [
+            true
+          ]
+        },
+        "persistence": {
+          "type": "object",
+          "default": {},
+          "title": "The persistence Schema",
+          "required": [
+            "claimTemplateRequestStorage",
+            "claimTemplateStorageClass"
+          ],
+          "properties": {
+            "claimTemplateRequestStorage": {
+              "type": "string",
+              "default": "",
+              "minLength": 2,
+              "title": "The claimTemplateRequestStorage Schema",
+              "examples": [
+                "2Gi"
+              ]
+            },
+            "claimTemplateStorageClass": {
+              "type": "string",
+              "default": "",
+              "minLength": 1,
+              "title": "The claimTemplateStorageClass Schema",
+              "examples": [
+                ""
+              ]
+            }
+          },
+          "examples": [{
+            "claimTemplateRequestStorage": "2Gi",
+            "claimTemplateStorageClass": ""
+          }]
+        },
+        "calicoNetpol": {
+          "type": "object",
+          "default": {},
+          "title": "The calicoNetpol Schema",
+          "required": [
+            "enabled"
+          ],
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "default": false,
+              "title": "The enabled Schema",
+              "examples": [
+                false
+              ]
+            }
+          },
+          "examples": [{
+            "enabled": false
+          }]
+        }
+      },
+      "examples": [{
+        "enabled": true,
+        "persistence": {
+          "claimTemplateRequestStorage": "2Gi",
+          "claimTemplateStorageClass": ""
+        },
+        "calicoNetpol": {
+          "enabled": false
+        }
+      }]
+    },
+    "inbound-worker": {
+      "type": "object",
+      "default": {},
+      "title": "The inbound-worker Schema",
+      "required": [
+        "enabled",
+        "host_name",
+        "calicoNetpol"
+      ],
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": false,
+          "title": "The enabled Schema",
+          "examples": [
+            true
+          ]
+        },
+        "host_name": {
+          "type": "string",
+          "default": "",
+          "title": "The host_name Schema which should match the common name in the server certificate",
+          "examples": [
+            "axway.dev.ampint.com"
+          ]
+        },
+        "calicoNetpol": {
+          "type": "object",
+          "default": {},
+          "title": "The calicoNetpol Schema",
+          "required": [
+            "enabled",
+            "outboundRule"
+          ],
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "default": false,
+              "title": "The enabled Schema",
+              "examples": [
+                false
+              ]
+            },
+            "outboundRule": {
+              "type": "object",
+              "default": {},
+              "title": "The outboundRule Schema",
+              "required": [
+                "selector"
+              ],
+              "properties": {
+                "selector": {
+                  "type": "string",
+                  "default": "",
+                  "title": "The selector Schema",
+                  "examples": [
+                    "role == 'any-address'"
+                  ]
+                }
+              },
+              "examples": [{
+                "selector": "role == 'any-address'"
+              }]
+            }
+          },
+          "examples": [{
+            "enabled": false,
+            "outboundRule": {
+              "selector": "role == 'any-address'"
+            }
+          }]
+        }
+      },
+      "examples": [{
+        "enabled": true,
+        "host_name": "axway.dev.ampint.com",
+        "calicoNetpol": {
+          "enabled": false,
+          "outboundRule": {
+            "selector": "role == 'any-address'"
+          }
+        }
+      }]
+    },
+    "orchestrator": {
+      "type": "object",
+      "default": {},
+      "title": "The orchestrator Schema",
+      "required": [
+        "enabled",
+        "max_executions_limit",
+        "calicoNetpol"
+      ],
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": false,
+          "title": "The enabled Schema",
+          "examples": [
+            true
+          ]
+        },
+        "max_executions_limit": {
+          "type": "string",
+          "default": "",
+          "title": "The max_executions_limit Schema",
+          "examples": [
+            "20"
+          ]
+        },
+        "calicoNetpol": {
+          "type": "object",
+          "default": {},
+          "title": "The calicoNetpol Schema",
+          "required": [
+            "enabled",
+            "outboundRule"
+          ],
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "default": false,
+              "title": "The enabled Schema",
+              "examples": [
+                false
+              ]
+            },
+            "outboundRule": {
+              "type": "object",
+              "default": {},
+              "title": "The outboundRule Schema",
+              "required": [
+                "selector"
+              ],
+              "properties": {
+                "selector": {
+                  "type": "string",
+                  "default": "",
+                  "title": "The selector Schema",
+                  "examples": [
+                    "role == 'any-address'"
+                  ]
+                }
+              },
+              "examples": [{
+                "selector": "role == 'any-address'"
+              }]
+            }
+          },
+          "examples": [{
+            "enabled": false,
+            "outboundRule": {
+              "selector": "role == 'any-address'"
+            }
+          }]
+        },
+        "connectors": {
+          "type": "object",
+          "default": {},
+          "title": "The connectors Schema",
+          "required": [
+            "nfs"
+          ],
+          "properties": {
+            "nfs": {
+              "type": "object",
+              "default": {},
+              "title": "The NFS Connector Schema",
+              "required": [
+                "enabled",
+                "volumes"
+              ],
+              "properties": {
+                "enabled": {
+                  "type": "boolean",
+                  "default": false,
+                  "title": "The enabled Schema",
+                  "examples": [
+                    true
+                  ]
+                },
+                "volumes": {
+                  "type": "array",
+                  "minItems": 0,
+                  "uniqueItems": true,
+                  "default": [],
+                  "title": "The NFS volume Schema",
+                  "items": {
+                    "type": "object",
+                    "default": {},
+                    "title": "A NFS volume Schema",
+                    "required": [
+                      "name",
+                      "server",
+                      "share",
+                      "mountOptions"
+                    ],
+                    "properties": {
+                      "name": {
+                        "type": "string",
+                        "pattern": "^[A-z0-9\\-]+$",
+                        "default": "",
+                        "minLength": 1,
+                        "title": "The NFS volume name Schema",
+                        "examples": [
+                          "myVolume"
+                        ]
+                      },
+                      "server": {
+                        "type": "string",
+                        "default": "",
+                        "minLength": 1,
+                        "title": "The NFS server Schema",
+                        "examples": [
+                          "myServer"
+                        ]
+                      },
+                      "share": {
+                        "type": "string",
+                        "default": "",
+                        "minLength": 1,
+                        "title": "The NFS share name Schema",
+                        "examples": [
+                          "myShare"
+                        ]
+                      },
+                      "mountOptions": {
+                        "type": "array",
+                        "default": [],
+                        "title": "The mountOptions Schema",
+                        "items": {
+                          "type": "string",
+                          "default": "",
+                          "title": "A Schema",
+                          "examples": [
+                            "nfsvers=4.1"
+                          ]
+                        },
+                        "examples": [
+                          [
+                            "nfsvers=4.1"]
+                        ]
+                      }
+                    },
+                    "examples": [{
+                      "name": "myVolume",
+                      "server": "myServer",
+                      "share": "myShare",
+                      "mountOptions": [
+                        "nfsvers=4.1"
+                      ]
+                    }]
+                  },
+                  "examples": [
+                    [{
+                      "name": "myVolume",
+                      "server": "myServer",
+                      "share": "myShare",
+                      "mountOptions": [
+                        "nfsvers=4.1"
+                      ]
+                    }]
+                  ]
+                }
+              },
+              "examples": [{
+                "enabled": true,
+                "volumes": [{
+                  "name": "myVolume",
+                  "server": "myServer",
+                  "share": "myShare",
+                  "mountOptions": [
+                    "nfsvers=4.1"
+                  ]
+                }]
+              }]
+            }
+          },
+          "examples": [{
+            "nfs": {
+              "enabled": true,
+              "volumes": [{
+                "name": "myVolume",
+                "server": "myServer",
+                "share": "myShare",
+                "mountOptions": [
+                  "nfsvers=4.1"
+                ]
+              }]
+            }
+          }]
+        }
+      },
+      "examples": [{
+        "enabled": true,
+        "max_executions_limit": "20",
+        "calicoNetpol": {
+          "enabled": false,
+          "outboundRule": {
+            "selector": "role == 'any-address'"
+          }
+        },
+        "connectors": {
+          "nfs": {
+            "enabled": true,
+            "volumes": [
+              {
+                "name": "myVolume",
+                "server": "myServer",
+                "share": "myShare",
+                "mountOptions": [
+                  "nfsvers=4.1"
+                ]
+              }
+            ]
+          }
+        }
+      }]
+    },
+    "sink-agent": {
+      "type": "object",
+      "default": {},
+      "title": "The sink-agent Schema",
+      "required": [
+        "enabled",
+        "calicoNetpol"
+      ],
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": false,
+          "title": "The enabled Schema",
+          "examples": [
+            true
+          ]
+        },
+        "calicoNetpol": {
+          "type": "object",
+          "default": {},
+          "title": "The calicoNetpol Schema",
+          "required": [
+            "enabled",
+            "outboundRule"
+          ],
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "default": false,
+              "title": "The enabled Schema",
+              "examples": [
+                false
+              ]
+            },
+            "outboundRule": {
+              "type": "object",
+              "default": {},
+              "title": "The outboundRule Schema",
+              "required": [
+                "selector"
+              ],
+              "properties": {
+                "selector": {
+                  "type": "string",
+                  "default": "",
+                  "title": "The selector Schema",
+                  "examples": [
+                    "role == 'any-address'"
+                  ]
+                }
+              },
+              "examples": [{
+                "selector": "role == 'any-address'"
+              }]
+            }
+          },
+          "examples": [{
+            "enabled": false,
+            "outboundRule": {
+              "selector": "role == 'any-address'"
+            }
+          }]
+        }
+      },
+      "examples": [{
+        "enabled": true,
+        "calicoNetpol": {
+          "enabled": false,
+          "outboundRule": {
+            "selector": "role == 'any-address'"
+          }
+        }
+      }]
+    },
+    "pep-server": {
+      "type": "object",
+      "default": {},
+      "title": "The pep-server Schema",
+      "required": [
+        "enabled",
+        "calicoNetpol"
+      ],
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": false,
+          "title": "The enabled Schema",
+          "examples": [
+            true
+          ]
+        },
+        "calicoNetpol": {
+          "type": "object",
+          "default": {},
+          "title": "The calicoNetpol Schema",
+          "required": [
+            "enabled"
+          ],
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "default": false,
+              "title": "The enabled Schema",
+              "examples": [
+                false
+              ]
+            }
+          },
+          "examples": [{
+            "enabled": false
+          }]
+        }
+      },
+      "examples": [{
+        "enabled": true,
+        "calicoNetpol": {
+          "enabled": false
+        }
+      }]
+    },
+    "predeploy": {
+      "type": "object",
+      "default": {},
+      "title": "The predeploy Schema",
+      "required": [
+        "enabled"
+      ],
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": false,
+          "title": "The enabled Schema",
+          "examples": [
+            true
+          ]
+        }
+      },
+      "examples": [{
+        "enabled": true
+      }]
+    },
+    "management-center": {
+      "type": "object",
+      "default": {},
+      "title": "The management-center Schema",
+      "required": [
+        "enabled",
+        "calicoNetpol"
+      ],
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": false,
+          "title": "The enabled Schema",
+          "examples": [
+            false
+          ]
+        },
+        "calicoNetpol": {
+          "type": "object",
+          "default": {},
+          "title": "The calicoNetpol Schema",
+          "required": [
+            "enabled"
+          ],
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "default": false,
+              "title": "The enabled Schema",
+              "examples": [
+                false
+              ]
+            }
+          },
+          "examples": [{
+            "enabled": false
+          }]
+        }
+      },
+      "examples": [{
+        "enabled": false,
+        "calicoNetpol": {
+          "enabled": false
+        }
+      }]
+    }
+  },
+  "examples": [{
+    "global": {
+      "image": {
+        "repository": "eipaas-docker-snapshot.artifactory.axway.com",
+        "pullPolicy": "IfNotPresent",
+        "imagePullSecrets": [{
+          "name": "ampint-docker-artifactory"
+        }]
+      },
+      "appEnv": "env",
+      "external_domain": "",
+      "claimName": "sharedstorage-claim",
+      "volumeStorageName": "fileshare-storage",
+      "clusterKey": ""
+    },
+    "common": {
+      "enabled": true,
+      "cert_name": "mykey.p12",
+      "admin_email": "",
+      "dxchange_email_authentication": true,
+      "dxchange_email_host": "",
+      "dxchange_email_port": "",
+      "dxchange_email_username": "",
+      "acceptGeneralConditions": "no",
+      "serverCertPassword": "",
+      "sftpServerCertPassword": "",
+      "serverTruststorePassword": "",
+      "dockerconfigjson": "",
+      "fromMailId": "",
+      "fromMailPassword": "",
+      "mcAdminUser": "YWRtaW4=",
+      "mcAdminPassword": "",
+      "persistence": {
+        "claimRequestCapacity": "2Gi",
+        "volumeCapacity": "2Gi"
+      },
+      "azfiles": {
+        "enabled": false,
+        "resourceGroup": "",
+        "storageAccountName": "",
+        "fileshareName": "",
+        "azureStorageAccountName": "",
+        "azureStorageAccountKey": ""
+      },
+      "efs": {
+        "enabled": false,
+        "volumeHandle": ""
+      },
+      "nfs": {
+        "enabled": false,
+        "staticPvc": false,
+        "storageClassName": "",
+        "server": "",
+        "path": "/",
+        "mode": "csi",
+        "mountOptions": [
+          "nfsvers=4.1"
+        ]
+      },
+      "certificate": {
+        "enabled": false,
+        "duration": "2190h",
+        "renewBefore": "24h",
+        "subject": {
+          "organizations": [
+            "mycompany"
+          ]
+        },
+        "issuerRef": {
+          "name": "letsencrypt-prod",
+          "kind": "ClusterIssuer"
+        },
+        "keystoresPasswordSecretRef": {
+          "key": "server_cert_password",
+          "name": "cert-p12"
+        }
+      },
+      "enable_audits": "true",
+      "async_audits": "true",
+      "enable_transaction_logs": "true"
+    },
+    "ingress": {
+      "enabled": true,
+      "calicoNetpol": {
+        "enabled": false,
+        "subnetEntityRule": {
+          "selector": "role == 'nodes-subnet-vpc-cidr'"
+        }
+      }
+    },
+    "hazelcast": {
+      "enabled": true,
+      "persistence": {
+        "claimTemplateRequestStorage": "2Gi",
+        "claimTemplateStorageClass": ""
+      },
+      "calicoNetpol": {
+        "enabled": false
+      }
+    },
+    "inbound-worker": {
+      "enabled": true,
+      "host_name": "",
+      "calicoNetpol": {
+        "enabled": false,
+        "outboundRule": {
+          "selector": "role == 'any-address'"
+        }
+      }
+    },
+    "orchestrator": {
+      "enabled": true,
+      "max_executions_limit": "20",
+      "calicoNetpol": {
+        "enabled": false,
+        "outboundRule": {
+          "selector": "role == 'any-address'"
+        }
+      },
+      "connectors": {
+        "nfs": {
+          "enabled": true,
+          "volumes": [{
+            "name": "myVolume",
+            "server": "myServer",
+            "share": "myShare",
+            "mountOptions": [
+              "nfsvers=4.1"
+            ]
+          }]
+        }
+      }
+    },
+    "sink-agent": {
+      "enabled": true,
+      "calicoNetpol": {
+        "enabled": false,
+        "outboundRule": {
+          "selector": "role == 'any-address'"
+        }
+      }
+    },
+    "pep-server": {
+      "enabled": true,
+      "calicoNetpol": {
+        "enabled": false
+      }
+    },
+    "predeploy": {
+      "enabled": true
+    },
+    "management-center": {
+      "enabled": false,
+      "calicoNetpol": {
+        "enabled": false
+      }
+    }
+  }]
+}

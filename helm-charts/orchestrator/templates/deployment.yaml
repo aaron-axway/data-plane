@@ -1,0 +1,189 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ template "orchestrator.appName" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "orchestrator.labels" . | nindent 4 }}
+spec:
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.replicaCount }}
+  {{- end }}
+  minReadySeconds: 60
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: {{ .Values.maxSurge }}
+      maxUnavailable: {{ .Values.maxUnavailable }}
+  selector:
+    matchLabels:
+      {{- include "orchestrator.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "orchestrator.selectorLabels" . | nindent 8 }}
+    spec:
+      terminationGracePeriodSeconds: {{ .Values.terminationGracePeriodSeconds }}
+      {{- with .Values.global.image.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- if .Values.serviceAccount.enabled }}
+      serviceAccountName: {{ include "orchestrator.serviceAccountName" . }}
+      {{- end }}
+      {{- if .Values.podSecurityContextEnabled }}
+      securityContext: {{- toYaml .Values.podSecurityContext| nindent 8 }}
+      {{- end }}
+      dnsConfig:
+        options:
+          - name: use-vc
+      initContainers:
+        - name: {{ .Chart.Name }}-init
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: docker.repository.axway.com/amplifyintegration-docker-prod/1.0.0/alpine-curl-jq:latest
+          imagePullPolicy: {{ .Values.global.image.pullPolicy }}
+          volumeMounts:
+            - name: {{ .Values.global.volumeStorageName }}
+              mountPath: /efs
+          command:
+            - "/bin/sh"
+            - "-c"
+            - >
+              version="{{ .Values.image.buildTag }}" ;
+              predeploy_version="{{ .Values.image.buildTag }}" ;
+              hazelcast_basename=hazelcast-{{ .Values.global.appEnv }} ;
+              for number in 0 1 2 ; do
+              hazelcast=${hazelcast_basename}-${number} ;
+              printf "waiting for  /efs/upgrade-check/hazelcast-started-${hazelcast}-${version}.txt\n" ;
+              until [ -f "/efs/upgrade-check/hazelcast-started-${hazelcast}-${version}.txt" ]; do
+              printf "Waiting ...\n" ;
+              sleep 2 ;
+              done ;
+              done ;
+              printf "waiting for /efs/upgrade-check/cachecopy-complete-${predeploy_version}.txt\n" ;
+              until [ -f "/efs/upgrade-check/cachecopy-complete-${predeploy_version}.txt" ]; do
+              printf "Waiting ...\n" ;
+              sleep 2 ;
+              done ;
+              hazelcastIp="hazelcast-{{ .Values.global.appEnv }}.{{ .Release.Namespace }}.svc.cluster.local";
+              until [ "$(curl -s $hazelcastIp:5701/hazelcast/health | jq '.clusterState=="ACTIVE" and .nodeState=="ACTIVE" and .clusterSafe==true and .clusterSize>=2')" = "true" ];  do
+              printf "Waiting for hazelcast ...\n";
+              sleep 2;
+              done
+      containers:
+        - name: {{ template "orchestrator.appName" . }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.global.image.repository }}/{{ .Values.image.name }}:{{ .Values.image.buildTag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.global.image.pullPolicy }}
+          lifecycle:
+            preStop:
+              exec:
+                command: ["curl","-X DELETE","http://localhost:1919/ir/removeIRDetails"]
+          envFrom:
+            {{- if ne  (include "parent.dataplaneMode" . ) "shared" }}
+            - secretRef:
+                name: "ampint-frommail"
+            {{- end }}
+            - configMapRef:
+                name: {{ template "orchestrator.appName" . }}
+            - configMapRef:
+                name: configmap-common
+          env:
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: local_ip
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP
+            - name: hz_client_ip
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP
+            - name: orchestrator_service
+              value: orchestrator-{{ .Values.global.appEnv }}.{{ .Release.Namespace }}.svc.cluster.local
+          ports:
+            - containerPort: 1919
+              name: port1
+          volumeMounts:
+            - name: {{ .Values.global.volumeStorageName }}
+              mountPath: /efs
+            - name: tmpdir
+              mountPath: /tmp
+            {{- if .Values.hostPath.enabled }}
+            - name: payloads-txn-data
+              mountPath: "{{ .Values.ebs_root }}"
+            - name: txn-log-base-path
+              mountPath: "{{ .Values.txn_log_base_path }}"
+            {{- end }}
+            {{- if .Values.connectors.nfs.enabled }}
+            {{- range $index, $volume := .Values.connectors.nfs.volumes -}}
+            {{- with $volume }}
+            - name: "connector-nfs-{{ $index }}"
+              mountPath: "/connectors/nfs/{{ .name }}"
+            {{- end }}
+            {{- end }}
+            {{- end }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 1919
+            initialDelaySeconds: {{ .Values.livenessProbeInitialDelaySeconds }}
+            periodSeconds:  {{ .Values.livenessProbePeriodSeconds }}
+            failureThreshold: {{ .Values.livenessProbeFailureThreshold}}
+            successThreshold: 1
+            timeoutSeconds: {{ .Values.livenessProbeTimeoutSeconds }}
+          startupProbe:
+            httpGet:
+              path: /openapi
+              port: 1919
+            failureThreshold: {{ .Values.startupProbeFailureThreshold }}
+            successThreshold: 1
+            periodSeconds: {{ .Values.startupProbePeriodSeconds }}
+            timeoutSeconds: {{ .Values.startupProbeTimeoutSeconds }}
+      volumes:
+      - name: tmpdir
+        emptyDir: {}
+      {{- if .Values.hostPath.enabled }}
+      - name: payloads-txn-data
+        hostPath:
+          path: /local/dx-data/data
+          type: DirectoryOrCreate
+      - name: txn-log-base-path
+        hostPath:
+          path: /local/dx-data/logs
+          type: DirectoryOrCreate
+      {{- end }}
+      - name: {{ .Values.global.volumeStorageName }}
+        persistentVolumeClaim:
+          claimName: {{ .Release.Namespace }}-{{ .Values.global.claimName }}
+      {{- if .Values.connectors.nfs.enabled }}
+      {{- range $index, $volume := .Values.connectors.nfs.volumes -}}
+      {{- with $volume }}
+      - name: "connector-nfs-{{ $index }}"
+        persistentVolumeClaim:
+          claimName: "ampint-connector-nfs-pvc-{{ .name }}"
+      {{- end }}
+      {{- end }}
+      {{- end }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

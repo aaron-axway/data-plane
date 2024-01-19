@@ -1,0 +1,41 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: configmap-common
+  namespace: {{ .Release.Namespace }}
+data:
+  s3_payload: "{{ tpl  .Values.s3_payload . }}"
+  tenant_namespace: "{{ .Release.Namespace }}"
+  min_member_count: "{{ tpl  .Values.hz_min_members . }}"
+  event_cache_path: "{{ tpl  .Values.event . }}"
+  component_cache_path: "{{ tpl  .Values.component . }}"
+  cluster_name: "{{ tpl  .Values.cluster_name . }}"
+  cluster_type: "{{ tpl  .Values.cluster_type . }}"
+  domain: "{{ tpl  .Values.domain . }}"
+  tenant: "{{ tpl  .Values.tenant . }}"
+  im_url: "wss://services.{{ tpl  .Values.domain . }}/monitor/ws"
+  sink_ws_url: "wss://services.{{ tpl  .Values.domain . }}/auditservice/ws"
+  dxchange_email_host: "{{ tpl  .Values.dxchange_email_host . }}"
+  admin_email: "{{ tpl  .Values.admin_email . }}"
+  mode: {{ include "parent.dataplaneMode" . }}
+  {{- if eq  (include "parent.dataplaneMode" . ) "shared" }}
+  dxchange_email_frommailid: "{{ tpl  .Values.fromMailId . }}"
+  support_email: "{{ tpl  .Values.support_email . }}"
+  server_cert_path: /efs/certificate/{{ include "parent.dataplaneMode" . }}/{{ tpl  .Values.cert_name . }}
+  sftp_server_cert_path: /efs/certificate/{{ include "parent.dataplaneMode" . }}/{{ tpl  .Values.cert_name . }}
+  server_truststore_path: /efs/certificate/{{ include "parent.dataplaneMode" . }}/{{ tpl  .Values.truststore . }}
+  efs_root: /efs
+  {{- else }}
+  dxchange_email_port: "{{ tpl  .Values.dxchange_email_port . }}"
+  dxchange_email_usetls: "{{ .Values.dxchange_email_usetls }}"
+  dxchange_email_username: "{{ tpl  .Values.dxchange_email_username . }}"
+  dxchange_email_authentication: "{{ .Values.dxchange_email_authentication }}"
+  clusterRefId: "{{ tpl  .Values.clusterRefId . }}"
+  server_cert_path: /efs/certificates/{{ tpl  .Values.clusterRefId . }}/{{ tpl  .Values.cert_name . }}
+  sftp_server_cert_path: /efs/certificates/{{ tpl  .Values.clusterRefId . }}/{{ tpl .Values.cert_name .}}
+  server_truststore_path: /efs/certificates/{{ tpl  .Values.clusterRefId . }}/{{ tpl  .Values.truststore . }}
+  efs_root: /efs/clusters/{{ tpl  .Values.clusterRefId . }}
+  {{- end }}
+  sftp_server_port: "{{ tpl  .Values.sftp_server_port . }}"
+  enable_audits: "{{ tpl  .Values.enable_audits . }}"
+  enable_transaction_logs: "{{ tpl  .Values.enable_transaction_logs . }}"

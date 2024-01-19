@@ -1,0 +1,37 @@
+{{- if .Values.azureFiles.forceCloseHandles.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: predeploy-entrypoint-override.sh
+data:
+  predeploy-entrypoint-override.sh: |
+    set -e
+    {{- if .Values.azureFiles.forceCloseHandles.enabled }}
+    client_id={{ .Values.azureFiles.forceCloseHandles.vmssManagedIdentityClientId }}
+    storage_account={{ .Values.azureFiles.forceCloseHandles.storageAccount }}
+    fileshare={{ .Values.azureFiles.forceCloseHandles.fileshare }}
+    echo "closing remaining handles on component and event cache:"
+    echo "1/4: get an oauth2 access token based on your managed identity (client_id: ${client_id}), authorizing access to your storage account ${storage_account}"
+    response=$(curl -s "http://169.254.169.254/metadata/identity/oauth2/token?api-version=2018-02-01&client_id=${client_id}&resource=https%3A%2F%2F${storage_account}.file.core.windows.net" -H Metadata:true)
+    access_token=$(printf "${response}" | sed 's/^.*"access_token":"\([^"]*\)".*$/\1/g')
+
+    echo "2/4: list active file handles in component-cache & event-cache"
+    curl -s --request GET -H "x-ms-version: 2023-01-03" -H "x-ms-file-request-intent: backup" -H "x-ms-recursive: true" -H "Authorization: Bearer ${access_token}" \
+      "https://${storage_account}.file.core.windows.net/${fileshare}/component-cache?comp=listhandles"
+    curl -s --request GET -H "x-ms-version: 2023-01-03" -H "x-ms-file-request-intent: backup" -H "x-ms-recursive: true" -H "Authorization: Bearer ${access_token}" \
+      "https://${storage_account}.file.core.windows.net/${fileshare}/event-cache?comp=listhandles"
+
+    echo "3/4: force close handles in component-cache"
+    curl -s --request PUT -i -d "" -H "x-ms-version: 2023-01-03" -H "x-ms-file-request-intent: backup" -H "x-ms-recursive: true"  -H "x-ms-handle-id: *" -H "Authorization: Bearer ${access_token}" \
+      "https://${storage_account}.file.core.windows.net/${fileshare}/component-cache?comp=forceclosehandles"
+
+    echo "4/4: force close handles in event-cache"
+    curl -s --request PUT -i -d "" -H "x-ms-version: 2023-01-03" -H "x-ms-file-request-intent: backup" -H "x-ms-recursive: true"  -H "x-ms-handle-id: *" -H "Authorization: Bearer ${access_token}" \
+      "https://${storage_account}.file.core.windows.net/${fileshare}/event-cache?comp=forceclosehandles"
+
+    echo "closed handles"
+    {{- end }}
+    echo "starting cache copy"
+    sh startup.sh
+    echo "finished cache copy"
+    {{- end }}

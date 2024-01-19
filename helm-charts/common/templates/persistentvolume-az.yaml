@@ -1,0 +1,28 @@
+{{- if .Values.azfiles.enabled -}}
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: {{ .Release.Namespace }}-{{ .Values.persistence.volumeName }}
+spec:
+  accessModes:
+  - {{ .Values.persistence.volumeAccessMode  }}
+  capacity:
+    storage: {{ .Values.persistence.volumeCapacity }}
+  persistentVolumeReclaimPolicy: {{ .Values.persistence.volumeReclaimPolicy }}
+  claimRef:
+    name: {{ .Release.Namespace }}-{{ .Values.global.claimName }}
+    namespace: {{ .Release.Namespace }}
+  csi:
+    driver: file.csi.azure.com
+    readOnly: false
+    volumeHandle: {{.Values.azfiles.resourceGroup}}#{{.Values.azfiles.storageAccountName}}#{{.Values.azfiles.fileshareName}}###{{.Release.Namespace}}
+    volumeAttributes:
+      resourceGroup: {{ .Values.azfiles.resourceGroup}}
+      shareName: {{.Values.azfiles.fileshareName}}
+    nodeStageSecretRef:
+      name: azurefs-secret
+      namespace: {{ .Release.Namespace }}
+  mountOptions:
+    - uid=10010
+    - gid=10020
+{{- end -}}

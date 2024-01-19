@@ -1,0 +1,15 @@
+{{ if and .Values.serviceAccount.enabled .Values.podSecurityPolicy.enabled }}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: {{ .Release.Namespace }}-{{ include "orchestrator.serviceAccountName" . }}-hostpath
+rules:
+  - apiGroups:
+      - policy
+    resourceNames:
+      - {{ .Release.Namespace }}-{{ include "orchestrator.serviceAccountName" . }}-hostpath
+    resources:
+      - podsecuritypolicies
+    verbs:
+      - use
+{{- end }}

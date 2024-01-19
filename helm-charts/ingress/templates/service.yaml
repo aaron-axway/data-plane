@@ -1,0 +1,32 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ template "ingress.appName" . }}
+  namespace: {{ .Release.Namespace }}
+  annotations:
+    {{- if eq  (include "parent.dataplaneMode" . ) "shared" }}
+    external-dns.alpha.kubernetes.io/hostname: ha-lb.{{ .Values.global.appEnv }}.{{ .Values.global.external_domain }}
+    service.beta.kubernetes.io/aws-load-balancer-connection-idle-timeout: "{{ .Values.timeouts.loadbalancer }}"
+    {{- else }}
+    external-dns.alpha.kubernetes.io/hostname: {{ .Values.global.appEnv }}.{{ .Values.global.external_domain }}
+    service.beta.kubernetes.io/aws-load-balancer-connection-idle-timeout: "{{ .Values.timeouts.loadbalancer }}"
+    {{- end }}
+  labels:
+    {{- include "ingress.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.service.type }}
+  selector:
+    {{- include "ingress.selectorLabels" . | nindent 4 }}
+  ports:
+    {{- if .Values.exposeProxyAdminPort }}
+    - name: admin
+      port: {{ .Values.proxyAdminPort }}
+      targetPort: admin
+      protocol: TCP
+    {{- end }}
+    {{- range $port := .Values.service.ports }}
+    - name: {{ $port.name }}
+      protocol: {{ $port.protocol }}
+      port: {{ $port.port }}
+      targetPort: {{ $port.targetPort }}
+    {{- end }}

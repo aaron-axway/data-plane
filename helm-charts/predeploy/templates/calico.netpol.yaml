@@ -1,0 +1,13 @@
+{{- if .Values.calicoNetpol.enabled }}
+apiVersion: projectcalico.org/v3
+kind: NetworkPolicy
+metadata:
+  name: {{ template "predeploy.appName" . }}
+  namespace: {{ .Release.Namespace }}
+spec:
+  order: 10
+  selector: ampint.ddplane == 'cache-copy-job'
+  types:
+    - Ingress
+    - Egress
+{{- end }}

@@ -1,0 +1,52 @@
+{{- if .Values.calicoNetpol.enabled }}
+apiVersion: projectcalico.org/v3
+kind: NetworkPolicy
+metadata:
+  name: {{ template "hazelcast.appName" . }}
+  namespace: {{ .Release.Namespace }}
+spec:
+  order: 10
+  selector: dplane == 'hazelcast'
+  types:
+    - Ingress
+    - Egress
+  ingress:
+    ### traffic from inbound-worker & orchestrator, and hazelcast ###
+    - action: Allow
+      protocol: TCP
+      source: 
+        selector: dplane == 'orchestrator' || dplane == 'inbound-worker'  || dplane == 'hazelcast' || dplane == 'management-center' || dplane == 'sink-agent' || dplane == 'pep-server'
+        namespaceSelector: projectcalico.org/name == '{{ .Release.Namespace }}'
+      destination:
+        ports:
+          {{- range .Values.service.ports}}
+          - {{ .targetPort }}
+          {{- end}}
+  egress:
+    # allow to communicate to DNS pods
+    - action: Allow
+      protocol: UDP
+      destination:
+        namespaceSelector: projectcalico.org/name == 'kube-system'
+        ports:
+          - 53
+    - action: Allow
+      protocol: TCP
+      destination:
+        namespaceSelector: projectcalico.org/name == 'kube-system'
+        ports:
+          - 53
+    # allow to communicate with itself for clustering
+    - action: Allow
+      destination:
+        selector: dplane == 'hazelcast'
+        namespaceSelector: projectcalico.org/name == '{{ .Release.Namespace }}'
+      protocol: TCP
+    # allow to communicate with k8s api server
+    - action: Allow
+      destination:
+        services:
+          name:  kubernetes
+          namespace: default
+      protocol: TCP
+{{- end}}

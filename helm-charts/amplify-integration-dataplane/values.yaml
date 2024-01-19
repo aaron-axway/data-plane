@@ -1,0 +1,326 @@
+######################################
+##      Globals                     ##
+######################################
+
+global:
+  #image settings
+  image:
+    #repository the docker repository which will have the image
+    repository: eipaas-docker-snapshot.artifactory.axway.com
+    #pullPolicy the image pull policy
+    pullPolicy: IfNotPresent
+    #imagePullSecrets secret that stores credentials for access to a registry for docker images
+    imagePullSecrets:
+      - name: ampint-docker-artifactory
+
+
+  # Chose here the HOSTNAME for your dataplane:
+  #    it will be: appEnv.external_domain (for example here: env.your-dataplane-domain.com)
+  appEnv: env
+  #external_domain domain name for environment
+  external_domain: ""
+
+  # claimName a reference to the file share claim name
+  claimName: sharedstorage-claim
+  # volumeStorageName the volume name of the persistent fileshare
+  volumeStorageName: fileshare-storage
+  # clusterKey is obtained from the Control Plane User Interface
+  clusterKey: ""
+
+
+######################################
+##      Common Chart                ##
+######################################
+
+common:
+  # enabled means the common chart is enabled
+  enabled: true
+
+  ######################################
+  ##      Environment config          ##
+  ######################################
+  cert_name: "mykey.p12" #domain certificate in pkcs12 format 
+
+  # Select here the emails targets for the dataplane (for example for admin email notification)
+  admin_email: "" # for example: "myadminemail@example.com"
+  dxchange_email_authentication: true
+  dxchange_email_host: "" # Email host name -for example smtp.office365.com
+  dxchange_email_port: "" #port number for example 587
+  dxchange_email_username: ""
+
+  ######################################
+  ##        General conditions        ##
+  ######################################
+
+  # acceptGeneralConditions In order to install the Data Plane, you need to set acceptGeneralConditions to "yes":
+  # You hereby accept that the Axway Products and/or Services shall be governed exclusively by the Axway General Terms and Conditions located at Axway General Conditions,
+  # https://www.axway.com/sites/default/files/Legal_documents/License_general_conditions/Axway_General_Conditions_version_april_2014_eng_(France).pdf
+  # unless an agreement has been signed with Axway in which case such agreement shall apply.
+  acceptGeneralConditions: "no"
+
+  ######################################
+  ##           Secrets                ##
+  ######################################
+  # This block generates secrets that will be used by the other Helm charts
+  # ALL SECRETS HAVE TO BE ENCODED into base 64 (to avoid YAML issues): 
+  #    printf 'myvaluetoencode' | base64 -w 0
+
+  # cert-p12 secret settings 
+  # All three values of this "cert-p12" secret need to be the same: the password for your PKCS 12 store (certificate + key for your dedicated Data Plane hostname)
+  #      If you already have your PKCS 12 already, set the password you used to create it, or else select one now
+  serverCertPassword: ""       # base 64 encoded PKCS 12 password:     printf 'mystorepassword' | base64 -w 0
+  sftpServerCertPassword: ""   # base 64 encoded PKCS 12 password:     printf 'mystorepassword' | base64 -w 0
+  serverTruststorePassword: "" # base 64 encoded PKCS 12 password:     printf 'mystorepassword' | base64 -w 0
+
+  # ampint-docker-artifactory secret settings 
+  # This secret is the image pull secrets used by all the charts
+  # For a customer: create a service account of type "Client Secret" on the Amplify Repository, and generate the .dockerconfigjson value with:
+  #      REGISTRY_USERNAME= # credentials from your service account
+  #      REGISTRY_PASSWORD= # credentials from your service account
+  #      REGISTRY_SERVER=docker.repository.axway.com
+  #      kubectl create secret docker-registry ampint-docker-artifactory --docker-server="${REGISTRY_SERVER}" --docker-username="${REGISTRY_USERNAME}" --docker-password="${REGISTRY_PASSWORD}" --dry-run=client --output=jsonpath="{.data.\.dockerconfigjson}"
+  dockerconfigjson: ""
+
+  # ampint-frommail secret settings
+  # This secret allow the Data Plane to send emails from a valid email address that you control. Fill in with valid, preexisting credentials
+  fromMailId: ""       # base 64 encoded credentials:     printf 'myemail@example.com' | base64 -w 0
+  fromMailPassword: "" # base 64 encoded credentials:     printf 'mypassword' | base64 -w 0
+
+  # management-center-credentials secret settings
+  # Select here the credentials to use for the optional Hazelcast UI (a service only used for debug purpose)
+  # whoever have access for data-plane they can only access management-center UI.
+  # once deployment is completed, if you want to access use kubectl port-forward command.
+  # kubectl port-forward svc/<management-center-svc-name> 9090:8080 -n <namespace>
+  mcAdminUser: "YWRtaW4=" # the default user is admin, please keep this one for now
+  mcAdminPassword: "" # base 64 encoded password to configure:     printf 'password14' | base64 -w 0
+
+  ####################################################
+  ##   Persistence Setup 
+  ####################################################
+
+  #common settings for persistence of data
+  persistence:
+    # claimRequestCapacity the claim's requested storage capacity size
+    claimRequestCapacity: 2Gi
+    # volumeCapacity the volume's storage capacity size
+    volumeCapacity: 2Gi
+
+  ## Azure Files ##
+  #If you are using Amazon EFS, modify settings in here
+  azfiles:
+    enabled: false # set it to true
+    resourceGroup: "" # where AKS cluster is installed ex: prf01-ampint-ddp-rg01
+    storageAccountName: "" # Storage account name where file storage created ex: prf02ampintddpsa01
+    fileshareName: "" # Name of your fileshare tst01ampintdd02afs01
+    # azurefs-secret this secret is used to get access to azure file system storage use storage account name and its key values.
+    azureStorageAccountName: ""  # Storage account name where file storage created ex: prf02ampintddpsa01 base64 encoded
+    azureStorageAccountKey: ""   # Storage account key1 value base 64 encoded password to configure: printf 'password14' | base64 -w 0
+
+  ## Amazon EFS ##
+  #If you are using Amazon EFS, modify settings in here 
+  efs:
+    enabled: false # set it to true
+    #volumeHandle the volume handle name. Composition of EFS "file system id::access point id". example fs-xxxxxxxxx::fsap-xxxxxxxxx
+    volumeHandle: ""
+
+  ## Standard NFS ##
+  #If you are using Standard NFS, modify settings in here 
+  nfs:
+    enabled: false # set it to true
+    staticPvc: false # if there is already NFS-server is ready, make this staticPvc false.
+    storageClassName: "" #provide the storageClassName
+    server: "" # example - fs-003ea2414e03f749d.efs.ap-south-1.amazonaws.com # put your nfs server info here
+    path: / # if you are not using / but a subdirectory, then make sure it already exists. Make sure gid 1001 is allowed to rw in that directory (e.g. perform a chown 1001:1001 . in your NFS)
+
+    # use csi or nfs depending on how you want to mount the volume directly as nfs or through the nfs csi driver
+    # if you use csi, make sure you have installed the csi driver:
+    #       helm repo add csi-driver-nfs https://raw.githubusercontent.com/kubernetes-csi/csi-driver-nfs/master/charts
+    #       helm install csi-driver-nfs csi-driver-nfs/csi-driver-nfs --namespace kube-system --version v4.1.0
+    mode: csi
+    mountOptions:
+      - nfsvers=4.1 # put your mount options here, as a yaml list
+
+  ####################################################
+  ##   [optional] Certificate auto-generation       ##
+  ####################################################
+  certificate:
+    # enable if you have cert-manager configured and want to use it to generate your certificate
+    # warning: if cert-manager isn't installed already, the certificate CRD may not be exist yet, and your installation will be rejected
+    # warning: this relies on the cert-p12 secret created in this chart to get a password for the stores
+    enabled: false
+    #duration that the cert is valid for
+    duration: 2190h # 3 months
+    #renewBefore cert will be renewed this time before expire date
+    renewBefore: 24h # 1 dau
+    subject:
+      #optional organizations to be used on the certifcate
+      organizations:
+        - mycompany
+    issuerRef:
+      #name -the name of the ClusterIssuer resource in your environment
+      name: letsencrypt-prod
+      kind: ClusterIssuer
+    keystoresPasswordSecretRef:
+      key: server_cert_password
+      name: cert-p12
+
+  #####################################################
+  ##   [optional] Audits configuration     ##
+  ################/####################################
+  enable_audits: "true" #true/false generating step level audits for a transaction
+  async_audits: "true"    #true/false pushing audits to hazelcast asynchronously
+  enable_transaction_logs: "true" #true/false Txn logs for an event
+
+######################################
+##      Ingress Chart               ##
+######################################
+
+ingress:
+  enabled: true
+
+  timeouts:
+    # Loadbalancer timeout higher than request to allow for clean closing of request.
+    loadbalancer: 3700
+    maxDuration: 3600s
+    idleTimeout: 3600s
+    connectTimeout: 15s
+
+  # Use the following block if you have Calico and want to use its network policies
+  # You will need the Calico API server to be installed as well
+  calicoNetpol:
+    enabled: false
+    # reference the source IPs allowed into envoy ingress
+    subnetEntityRule:
+      # use this to reference a (preexisting) networkset by label
+      selector: role == 'nodes-subnet-vpc-cidr'
+      # or uncomment this to directly reference IP cidr instead
+      #nets:
+      #  - 10.0.0.0/24 # put your subnet cidr here
+
+
+######################################
+##      Hazelcast Chart             ##
+######################################
+
+hazelcast:
+  enabled: true
+  persistence:
+    #claimTemplateRequestStorage the volumeClaimTemplate's requested storage capacity size
+    claimTemplateRequestStorage: 2Gi
+    #claimTemplateStorageClass class that will dynamically create storage on desired cloud platform
+    #For AWS set this value to gp3
+    #For Azure set this value to managed-csi
+    #For NFS see https://github.com/kubernetes-sigs/nfs-subdir-external-provisioner
+    claimTemplateStorageClass: ""
+
+  # Use the following block if you have Calico and want to use its network policies
+  # You will need the Calico API server to be installed as well
+  calicoNetpol:
+    enabled: false
+
+######################################
+##      Inbound-Worker Chart        ##
+######################################
+
+inbound-worker:
+  enabled: true
+  # Use the following block if you have Calico and want to use its network policies
+  # You will need the Calico API server to be installed as well
+
+  # host_name which should match the common name in the server_cert_path
+  host_name: ""
+
+  calicoNetpol:
+    enabled: false
+    # reference the targets the inbound-worker is allowed to reach
+    outboundRule:
+      # use this to reference a (preexisting) networkset
+      selector: role == 'any-address'
+      # or uncomment this to directly reference IP cidr instead
+      #nets:
+      #  - 0.0.0.0/0 # put your subnet cidr here
+
+######################################
+##      Orchestrator Chart          ##
+######################################
+
+orchestrator:
+  enabled: true
+  # max_executions_limit number of parallel executions allowed
+  max_executions_limit: "20"
+  # Use the following block if you have Calico and want to use its network policies
+  # You will need the Calico API server to be installed as well
+  calicoNetpol:
+    enabled: false
+    # reference the targets the orchestrator is allowed to reach
+    outboundRule:
+      # use this to reference a (preexisting) networkset
+      selector: role == 'any-address'
+      # or uncomment this to directly reference IP cidr instead
+      #nets:
+      #  - 0.0.0.0/0 # put your subnet cidr here
+
+  # connectors config
+  connectors:
+    # NFS connector config
+    nfs:
+      # enable/disable NFS volumes mount
+      enabled: false
+      # Configure NFS volumes mounted into the orchestrator file system.
+      # Volumes are mounted under /connectors/nfs/<name>
+      volumes:
+        - name: "local-volume-name"
+          server: "nfs-server"
+          share: "nfs-server-share"
+          mountOptions: # put your mount options here, as a yaml list
+            - nfsvers=4.1
+
+
+######################################
+##      Sink-Agent Chart        ##
+######################################
+
+sink-agent:
+  enabled: true
+  # Use the following block if you have Calico and want to use its network policies
+  # You will need the Calico API server to be installed as well
+
+  calicoNetpol:
+    enabled: false
+    # reference the targets the sink-agent is allowed to reach
+    outboundRule:
+      # use this to reference a (preexisting) networkset
+      selector: role == 'any-address'
+      # or uncomment this to directly reference IP cidr instead
+      #nets:
+      #  - 0.0.0.0/0 # put your subnet cidr here
+
+######################################
+##      Predeploy Chart             ##
+######################################
+
+predeploy:
+  enabled: true
+
+######################################
+##      Management-Center Chart     ##
+######################################
+
+management-center:
+  enabled: false
+  # Use the following block if you have Calico and want to use its network policies
+  # You will need the Calico API server to be installed as well
+  calicoNetpol:
+    enabled: true
+
+######################################
+##      PEP Server Chart            ##
+######################################
+
+pep-server:
+  enabled: true
+  # Use the following block if you have Calico and want to use its network policies
+  # You will need the Calico API server to be installed as well
+
+  calicoNetpol:
+    enabled: false

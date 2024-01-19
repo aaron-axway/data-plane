@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ template "management-center.appName" . }}
+  namespace: {{ .Release.Namespace }}
+data:
+  MC_CLUSTER1_NAME: {{ .Values.global.appEnv }}
+  MC_CLUSTER1_ADDRESSLIST: hazelcast-{{ .Values.global.appEnv }}.{{ .Release.Namespace }}.svc.cluster.local
+  JAVA_OPTS: "{{ .Values.javaOpts }}"

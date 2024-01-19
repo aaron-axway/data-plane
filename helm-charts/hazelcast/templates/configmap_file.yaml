@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: hazelcast-yaml
+  namespace: {{ .Release.Namespace }}
+data:
+  hazelcast.yaml: |-
+    hazelcast:
+      network:
+        join:
+          multicast:
+            enabled: false
+          kubernetes:
+            enabled: true
+            namespace: {{ .Release.Namespace }}
+            service-name: {{ .Chart.Name }}-{{ .Values.global.appEnv }}
+        rest-api:
+          enabled: true
+          endpoint-groups:
+            HEALTH_CHECK:
+              enabled: true

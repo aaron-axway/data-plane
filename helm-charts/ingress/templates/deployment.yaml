@@ -1,0 +1,150 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ template "ingress.appName" . }}
+  labels:
+{{ include "ingress.labels" . | indent 4 }}
+spec:
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "ingress.selectorLabels" . | nindent 6 }}
+  strategy:
+    {{ .Values.strategy | nindent 4 }}
+  template:
+    metadata:
+      labels:
+        {{- include "ingress.selectorLabels" . | nindent 8 }}
+        {{- if .Values.podLabels }}
+        ## Custom pod labels
+        {{- range $key, $value := .Values.podLabels }}
+        {{ $key }}: {{ $value | quote }}
+        {{- end }}
+        {{- end }}
+      annotations:
+        checksum/config: {{ include (print .Template.BasePath "/configmap.yaml") . | sha256sum }}
+        {{- if .Values.podAnnotations }}
+        ## Custom pod annotations
+        {{- range $key, $value := .Values.podAnnotations }}
+        {{ $key }}: {{ $value | quote }}
+        {{- end }}
+        {{- end }}
+    spec:
+      {{- with .Values.global.image.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- if .Values.podSecurityContextEnabled }}
+      securityContext:
+        {{ toYaml .Values.podSecurityContext | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "ingress.serviceAccountName" . }}
+      terminationGracePeriodSeconds: {{ .Values.terminationGracePeriodSeconds }}
+      #forces the use of tcp for dns resolutions
+      dnsConfig:
+        options:
+          - name: use-vc
+      initContainers:
+        - name: {{ .Chart.Name }}-init
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: docker.repository.axway.com/amplifyintegration-docker-prod/1.0.0/envsubst:v1.0
+          imagePullPolicy: {{ .Values.global.image.pullPolicy }}
+          command:
+          - "/bin/sh"
+          - "-c"
+          - "envsubst < /template/envoy.yaml > /config/envoy.yaml"
+          volumeMounts:
+          - name: workdir
+            mountPath: "/config" 
+          - name: config
+            mountPath: /template
+          envFrom:
+            - secretRef:
+                name: "cert-p12"
+            - configMapRef:
+                name: configmap-common
+          env:
+          {{- range $key, $value := .Values.env }}
+            - name: {{ $key | upper | replace "." "_" }}
+              value: {{ $value | quote }}
+          {{- end }}
+          resources:
+            {{ toYaml .Values.resources | nindent 12 }}
+      containers:
+        - name: {{ .Chart.Name }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: docker.repository.axway.com/amplifyintegration-docker-prod/1.3.0/envoyproxy:v1.28.0
+          imagePullPolicy: {{ .Values.global.image.pullPolicy }}
+          envFrom:
+            - secretRef:
+                name: "cert-p12"
+          command:
+            {{ toYaml .Values.command | nindent 12 }}
+          args:
+            {{- if $.Values.argsTemplate }}
+            {{ tpl $.Values.argsTemplate $ | nindent 12}}
+            {{- else }}
+            {{ toYaml .Values.args | nindent 12 }}
+            {{- end }}
+          ports:
+            {{- with .Values.ports }}
+            {{- range $key, $port := . }}
+            - name: {{ $key }}
+              {{ toYaml $port | nindent 14 }}
+            {{- end }}
+            {{- end }}
+          startupProbe:
+            {{ toYaml .Values.startupProbe | nindent 12 }}
+          livenessProbe:
+            {{ toYaml .Values.livenessProbe | nindent 12 }}
+          readinessProbe:
+            {{ toYaml .Values.readinessProbe | nindent 12 }}
+          env:
+          {{- range $key, $value := .Values.env }}
+            - name: {{ $key | upper | replace "." "_" }}
+              value: {{ $value | quote }}
+          {{- end }}
+          resources:
+            {{ toYaml .Values.resources | nindent 12 }}
+          volumeMounts:
+            - name: workdir
+              mountPath: /config
+            - name: {{ .Values.global.volumeStorageName }}
+              mountPath: /efs
+            {{- range $key, $value := .Values.secretMounts }}
+            - name: {{ $key }}
+              mountPath: {{ $value.mountPath }}
+            {{- end }}
+          lifecycle:
+            {{ toYaml .Values.lifecycle | nindent 12 }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{ toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{ toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{ toYaml . | nindent 8 }}
+      {{- end }}
+      volumes:
+        - name: config
+          configMap:
+            name: {{ template "ingress.appName" . }}
+        - name: workdir
+          emptyDir: {}
+        - name: {{ .Values.global.volumeStorageName }}
+          persistentVolumeClaim:
+            claimName: {{ .Release.Namespace }}-{{ .Values.global.claimName }}
+        {{- range $key, $value := .Values.secretMounts }}
+        - name: {{ $key }}
+          secret:
+            secretName: {{ $value.secretName }}
+            defaultMode: {{ $value.defaultMode }}
+        {{- end }}

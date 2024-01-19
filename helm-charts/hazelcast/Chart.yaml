@@ -1,0 +1,6 @@
+apiVersion: v2
+name: hazelcast
+description: Amplify Integration Hazelcast Helm Chart.
+type: application
+version: 1.4.0
+appVersion: "1.1.0"

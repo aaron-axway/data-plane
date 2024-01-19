@@ -1,0 +1,187 @@
+######################################
+##      Globals                     ##
+######################################
+
+global:
+  #image settings
+  image:
+    #repository the docker repository which will have the image
+    repository: eipaas-docker-snapshot.artifactory.axway.com
+    #pullPolicy the image pull policy
+    pullPolicy: IfNotPresent
+    #imagePullSecrets secret that stores credentials for access to a registry for docker images
+    imagePullSecrets:
+      - name: ampint-docker-artifactory
+
+  # Chose here the HOSTNAME for your dataplane:
+  #    it will be: appEnv.external_domain (for example here: env.your-dataplane-domain.com)
+  appEnv: env
+  #external_domain domain name for environment
+  external_domain: ""
+
+  # claimName a reference to the file share claim name
+  claimName: sharedstorage-claim
+  # volumeStorageName the volume name of the persistent fileshare
+  volumeStorageName: fileshare-storage
+  # clusterKey is obtained from the Control Plane User Interface
+  clusterKey: ""
+
+######################################
+##      Image                       ##
+######################################
+
+image:
+  name: hazelcast-server
+  buildTag: ampint-1.0_2023-02-14T09_31_50Z
+
+
+######################################
+##      Service                     ##
+######################################
+
+service:
+  type: ClusterIP
+  ports:
+    - name: http
+      protocol: TCP
+      port: 5701
+      targetPort: 5701
+
+######################################
+##      Persistence                 ##
+######################################
+#Disable load store for runtime cache in hazelcast
+efs_load_store_queues: "false"
+efs_load_store_maps: "true"
+
+
+persistence:
+  #claimTemplateRequestStorage storage request size for the claim template
+  claimTemplateRequestStorage: 5Gi
+  #claimTemplateStorageClass class that will dynamically create storage on desired cloud platform
+  #For AWS set this value to gp3
+  #For Azure set this value to managed-csi
+  claimTemplateStorageClass: ""
+  #claimTemplateName name of the claim for hazelcast queue storage
+  claimTemplateName: hazelcast-queue-storage
+  #claimTemplateAccessModes access mode for claim template
+  claimTemplateAccessModes: ReadWriteOnce
+
+######################################
+##      Probes                      ##
+######################################
+
+# Hazelcast Liveness probe
+livenessProbe:
+  # initialDelaySeconds is a delay before liveness probe is initiated
+  initialDelaySeconds: 30
+  # periodSeconds decides how often to perform the probe
+  periodSeconds: 300
+  # timeoutSeconds decides when the probe times out
+  timeoutSeconds: 120
+  # successThreshold is the minimum consecutive successes for the probe to be considered successful after having failed
+  successThreshold: 1
+  # failureThreshold is the minimum consecutive failures for the probe to be considered failed after having succeeded
+  failureThreshold: 3
+  # url path that will be called to check liveness
+  path: /hazelcast/health
+
+#TerminationGracePeriod
+terminationGracePeriodSeconds: 60
+# Hazelcast Readiness probe
+readinessProbe:
+  # initialDelaySeconds is a delay before readiness probe is initiated
+  initialDelaySeconds: 10
+  # periodSeconds decides how often to perform the probe
+  periodSeconds: 10
+  # timeoutSeconds decides when the probe times out
+  timeoutSeconds: 10
+  # successThreshold is the minimum consecutive successes for the probe to be considered successful after having failed
+  successThreshold: 1
+  # failureThreshold is the minimum consecutive failures for the probe to be considered failed after having succeeded
+  failureThreshold: 30
+  # url path that will be called to check readiness
+  path: /hazelcast/health/ready
+
+######################################
+##      Security                    ##
+######################################
+
+#serviceaccount for hazelcast
+serviceAccount:
+  enabled: true
+  # Use preexisting: true if you want to use a preexisting service account (e.g. created by the infra)
+  preexisting: false
+  annotations: {}
+  name: "hazelcast"
+  automountServiceAccountToken: true
+
+podSecurityPolicy:
+  # only applied if serviceAccount is enabled
+  # will bind that service Account to the "restricted" psp
+  # as no special capabilities are required for this service
+  enabled: true
+
+podAnnotations: {}
+
+podSecurityContextEnabled: true
+
+podSecurityContext:
+  supplementalGroups:
+    - 1001
+  fsGroup: 1001
+
+securityContext:
+  runAsUser: 10010
+  runAsGroup: 10020
+  runAsNonRoot: true
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+  seccompProfile:
+    type: RuntimeDefault
+  capabilities:
+    drop:
+      - all
+
+######################################
+##      Network Policies            ##
+######################################
+
+calicoNetpol:
+  enabled: false
+
+######################################
+##      Capacity/Affinity           ##
+######################################
+
+replicaCount: 3
+resources:
+  limits:
+    cpu: 3700m
+    memory: 6000Mi
+  requests:
+    cpu: 3700m
+    memory: 6000Mi
+
+nodeSelector: {}
+tolerations: []
+affinity: {}
+
+
+######################################
+##      Environment                 ##
+######################################
+#JAVAOPTS:
+javaOpts: "-Dhazelcast.config=/data/hazelcast/hazelcast.yaml -XX:MinRAMPercentage=50 -XX:MaxRAMPercentage=90 --add-exports java.base/jdk.internal.ref=ALL-UNNAMED --add-exports java.base/jdk.internal.util=ALL-UNNAMED --add-exports=java.base/jdk.internal.ref=ALL-UNNAMED --add-exports=java.base/sun.nio.ch=ALL-UNNAMED --add-exports=jdk.unsupported/sun.misc=ALL-UNNAMED --add-exports=jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED --add-opens=jdk.compiler/com.sun.tools.javac=ALL-UNNAMED --add-opens=java.base/java.lang=ALL-UNNAMED --add-opens=java.base/java.lang.reflect=ALL-UNNAMED --add-opens=java.base/java.io=ALL-UNNAMED --add-opens=java.base/java.util=ALL-UNNAMED"
+clusterRefId: "{{ (eq .Values.global.clusterKey \"\") | ternary \"\" (printf \"%s\" (.Values.global.clusterKey | b64dec | fromJson).clusterRefId) }}"
+nameOverride: ""
+fullnameOverride: ""
+
+
+
+
+
+
+
+
+

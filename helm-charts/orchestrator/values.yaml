@@ -1,0 +1,194 @@
+######################################
+##      Globals                     ##
+######################################
+
+global:
+  #image settings
+  image:
+    #repository the docker repository which will have the image
+    repository: eipaas-docker-snapshot.artifactory.axway.com
+    #pullPolicy the image pull policy
+    pullPolicy: IfNotPresent
+    #imagePullSecrets secret that stores credentials for access to a registry for docker images
+    imagePullSecrets:
+      - name: ampint-docker-artifactory
+  # Chose here the HOSTNAME for your dataplane:
+  #    it will be: appEnv.external_domain (for example here: env.your-dataplane-domain.com)
+  appEnv: env
+  #external_domain domain name for environment
+  external_domain: ""
+
+  # claimName a reference to the file share claim name
+  claimName: sharedstorage-claim
+  # volumeStorageName the volume name of the persistent fileshare
+  volumeStorageName: fileshare-storage
+  # clusterKey is obtained from the Control Plane User Interface
+  clusterKey: ""
+
+######################################
+##      Image                       ##
+######################################
+
+image:
+  name: orchestrator
+  buildTag: ampint-1.0_2023-02-14T09_31_50Z
+
+######################################
+##      Service                     ##
+######################################
+
+service:
+  type: ClusterIP
+  ports:
+    - name: http-port
+      port: 1919
+      targetPort: 1919
+
+######################################
+##      Persistence                 ##
+######################################
+#EBS_hostPath
+ebs_root: "/transaction-data"
+txn_log_base_path: "/transaction-logs"
+
+#EFS_Filesystem
+efs_root_path:  "/efs/transaction-data"
+efs_txn_log_path: "/efs/transaction-logs"
+
+# NFS Connector config - disabled by default
+connectors:
+  nfs:
+    enabled: false
+    mode: csi
+    volumes:
+      - name:   xxxxxxx                   # provide any name: "axway-pcloud"
+        server: xxxxxxx                   # server IP : sl1087339.pcloud.axway.int
+        share:  xxxxxxx                   # share path : /nfs-ocp-buch
+        mountOptions:
+          - nfsvers=4.1
+######################################
+##      Probes                      ##
+######################################
+
+#TerminationGracePeriod
+terminationGracePeriodSeconds: 60
+
+#liveness and startup probes
+livenessProbeInitialDelaySeconds: 300
+livenessProbePeriodSeconds: 300
+livenessProbeTimeoutSeconds: 120
+livenessProbeFailureThreshold: 3
+
+startupProbePeriodSeconds: 20
+startupProbeTimeoutSeconds: 20
+startupProbeFailureThreshold: 30
+
+######################################
+##      Security                    ##
+######################################
+
+#serviceaccount for orchestrator
+serviceAccount:
+  enabled: true
+  # Use preexisting: true if you want to use a preexisting service account (e.g. created by the infra)
+  preexisting: false
+  annotations: {}
+  name: "orchestrator"
+  automountServiceAccountToken: true
+
+podSecurityPolicy:
+  # only applied if serviceAccount is enabled
+  # will bind that service Account to the "restricted" psp
+  # as no special capabilities are required for this service
+  enabled: true
+
+hostPath:
+  enabled: true
+
+podAnnotations: {}
+
+podSecurityContextEnabled: true
+
+podSecurityContext:
+  supplementalGroups:
+    - 1001
+  fsGroup: 1001
+
+securityContext:
+  runAsUser: 10010
+  runAsGroup: 10020
+  runAsNonRoot: true
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+  seccompProfile:
+    type: RuntimeDefault
+  capabilities:
+    drop:
+      - all
+
+######################################
+##      Network Policies            ##
+######################################
+
+calicoNetpol:
+  enabled: false
+  # reference the targets the orchestrator is allowed to reach
+  outboundRule:
+    # use this to reference a (preexisting) networkset
+    selector: role == 'any-address'
+    # or uncomment this to directly reference IP cidr instead
+    #nets:
+    #  - 0.0.0.0/0 # put your subnet cidre here
+
+
+######################################
+##      Capacity/Affinity           ##
+######################################
+
+replicaCount: 1
+maxSurge: 100%
+maxUnavailable: 0
+
+resources:
+  limits:
+    cpu: 3700m
+    memory: 6000Mi
+  requests:
+    cpu: 3700m
+    memory: 6000Mi
+
+autoscaling:
+  enabled: true
+  minReplicas: 1
+  maxReplicas: 5
+  targetCPUUtilizationPercentage: 75
+  targetMemoryUtilizationPercentage: 75
+
+podDisruptionBudget:
+  enabled: false
+  minPods: 1
+
+nodeSelector: {}
+tolerations: []
+affinity: {}
+
+######################################
+##      Environment                 ##
+######################################
+
+nameOverride: ""
+fullnameOverride: ""
+
+#JavaOpts and executions-limits
+javaOpts: "-XX:MinRAMPercentage=50 -XX:MaxRAMPercentage=90"
+enable_legacy_tls: "false"
+max_executions_limit: "20"
+throw_exception_on_fail: "false"
+stale_process_interval: "30m"
+QUARKUS_LOG_CONSOLE_LEVEL: "INFO"  # Console log level for inbound server and orchestrator
+max_payload_size_kbs: "20"
+heartbeat_time_interval_sec: "300"
+heartbeat_timeout_sec: "900"
+
+#cidr_range block internal ip ranges (format exanple )0.73.0.0/16,172.21.0.0/16
+cidr_range: ""

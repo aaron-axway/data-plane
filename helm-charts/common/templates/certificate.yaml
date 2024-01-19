@@ -1,0 +1,28 @@
+{{- if .Values.certificate.enabled -}}
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: domain-certificate
+spec:
+  # Secret names are always required.
+  secretName: domain-certificate
+  duration: {{ .Values.certificate.duration }}
+  renewBefore: {{ .Values.certificate.renewBefore }}
+  subject: {{- toYaml .Values.certificate.subject | nindent 4 }}
+  commonName: {{ .Values.global.appEnv }}.{{ .Values.global.external_domain }}
+  isCA: false
+  privateKey:
+    algorithm: RSA
+    encoding: PKCS1
+    size: 2048
+  usages:
+    - server auth
+    - client auth
+  dnsNames:
+    - {{ .Values.global.appEnv }}.{{ .Values.global.external_domain }}
+  issuerRef: {{- toYaml .Values.certificate.issuerRef | nindent 4 }}
+  keystores:
+    pkcs12:
+      create: true
+      passwordSecretRef: {{- toYaml .Values.certificate.keystoresPasswordSecretRef | nindent 8 }}
+{{- end -}}

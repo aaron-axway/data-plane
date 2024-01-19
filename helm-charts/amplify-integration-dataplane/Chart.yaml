@@ -1,0 +1,43 @@
+apiVersion: v2
+name: amplify-integration-dataplane
+description: Amplify Integration DataPlane chart for Kubernetes
+type: application
+version: 1.4.0
+appVersion: "1.1.0"
+dependencies:
+  - name: common
+    version: 1.4.0
+    repository: file://../common
+    condition: common.enabled
+  - name: ingress
+    version: 1.4.0
+    repository: file://../ingress
+    condition: ingress.enabled
+  - name: hazelcast
+    version: 1.4.0
+    repository: file://../hazelcast
+    condition: hazelcast.enabled
+  - name: inbound-worker
+    version: 1.4.0
+    repository: file://../inbound-worker
+    condition: inbound-worker.enabled
+  - name: management-center
+    version: 1.4.0
+    repository: file://../management-center
+    condition: management-center.enabled
+  - name: orchestrator
+    version: 1.4.0
+    repository: file://../orchestrator
+    condition: orchestrator.enabled
+  - name: predeploy
+    version: 1.4.0
+    repository: file://../predeploy
+    condition: predeploy.enabled
+  - name: sink-agent
+    version: 1.4.0
+    repository: file://../sink-agent
+    condition: sink-agent.enabled
+  - name: pep-server
+    version: 1.4.0
+    repository: file://../pep-server
+    condition: pep-server.enabled
