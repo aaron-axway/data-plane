@@ -1,0 +1,56 @@
+# We are using hostpath for writing the transaction-logs and transaction-data to node volume by inbound-worker and orchestrator pods, and the node-volume data is transient data, and gets pushed to EFS/File-share as soon as the transaction processing completes
+# kubectl apply -f hostPath.yaml
+#apiVersion: apps/v1
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: chmod-hostpath-manager
+  namespace: kube-system
+  labels:
+    k8s-app: chmod-hostpath-manager
+spec:
+  selector:
+    matchLabels:
+      name: chmod-hostpath-manager
+  template:
+    metadata:
+      labels:
+        name: chmod-hostpath-manager
+    spec:
+      containers:
+        - name: chmod-hostpath-manager
+          # use any image that you like here that has shell, chmod, and chown.
+          # This image in particular is an example, and not provided by Axway
+          image: busybox@sha256:5cd3db04b8be5773388576a83177aff4f40a03457a63855f4b9cbe30542b9a43
+          command:
+            - sh
+            - -c
+            - >
+              mkdir -p /localpath/data &&
+              mkdir -p /localpath/logs &&
+              chown -R 10010:10020 /localpath &&
+              chmod -R 700 /localpath &&
+              echo "The new owner/permissions are:" &&
+              ls -ld /localpath/ &&
+              sleep infinity
+          resources:
+            limits:
+              cpu: 10m
+              memory: 10Mi
+            requests:
+              cpu: 10m
+              memory: 10Mi
+          volumeMounts:
+            - mountPath: /localpath
+              name: localpath
+      terminationGracePeriodSeconds: 1
+      volumes:
+        - name: localpath
+          hostPath:
+            # this is your chosen path on the host nodes.
+            # Make sure it's writable and mounted to the disks and not tmpfs.
+            path: /local/dx-data
+            type: DirectoryOrCreate
+      tolerations:
+        - key: dxchangeapps
+          operator: Exists
